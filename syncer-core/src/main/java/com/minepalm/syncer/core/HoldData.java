@@ -1,6 +1,5 @@
 package com.minepalm.syncer.core;
 
-import com.minepalm.syncer.api.SyncStage;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -9,29 +8,27 @@ import lombok.RequiredArgsConstructor;
 public class HoldData {
 
     private final String objectId;
-    private final String proxy;
     private final String server;
-    private final SyncStage stage;
     private final long time;
 
     public HoldData setObjectId(String objectId){
-        return new HoldData(objectId, this.proxy, this.server, this.stage, this.time);
-    }
-
-    public HoldData setProxyName(String proxy){
-        return new HoldData(this.objectId, proxy, this.server, this.stage, this.time);
+        return new HoldData(objectId, this.server, this.time);
     }
 
     public HoldData setServerName(String server){
-        return new HoldData(this.objectId, this.proxy, server, this.stage, this.time);
-    }
-
-    public HoldData serStage(SyncStage stage){
-        return new HoldData(this.objectId, this.proxy, this.server, stage, this.time);
+        return new HoldData(this.objectId, server, this.time);
     }
 
     public HoldData setTime(long time){
-        return new HoldData(this.objectId, this.proxy, this.server, this.stage, time);
+        return new HoldData(this.objectId, this.server, time);
+    }
+
+    public HoldData setCurrentTime(){
+        return new HoldData(this.objectId, this.server, System.currentTimeMillis());
+    }
+
+    public HoldData setTimeoutAfter(long mills){
+        return new HoldData(this.objectId, this.server, System.currentTimeMillis() + mills);
     }
 
 }

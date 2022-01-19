@@ -4,10 +4,12 @@ public interface SyncPubSub {
 
     boolean subscribe(String objectId, String sender);
 
-    boolean invokeRetryLock(String objectId);
+    boolean invokeRetryLock(Synced<?> synced);
 
-    boolean openSubscription(String objectId);
+    boolean openSubscription(Synced<?> synced);
 
-    boolean closeSubscription(String objectId);
+    boolean closeSubscription(Synced<?> synced);
+
+    void releaseAll();
 
 }

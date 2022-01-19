@@ -26,7 +26,7 @@ public class PlayerModifier {
 
     void apply(Player player, PlayerData data){
         for (LoadStrategy strategy : strategies.values()) {
-            strategy.onPlayerLoad(player, data);
+            strategy.applyPlayer(player, data);
         }
     }
 

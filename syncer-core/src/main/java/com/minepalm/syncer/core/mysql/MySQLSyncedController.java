@@ -1,6 +1,5 @@
 package com.minepalm.syncer.core.mysql;
 
-import com.minepalm.syncer.api.SyncStage;
 import com.minepalm.syncer.core.HoldData;
 import lombok.RequiredArgsConstructor;
 
@@ -12,14 +11,6 @@ public class MySQLSyncedController {
 
     private final String objectId;
     protected final MySQLSyncStatusDatabase database;
-
-    public CompletableFuture<SyncStage> getStage() {
-        return database.getStage(objectId);
-    }
-
-    public CompletableFuture<String> getHoldProxy() {
-        return database.getHoldingProxy(objectId);
-    }
 
     public CompletableFuture<String> getHoldServer() {
         return database.getHoldingServer(objectId);
@@ -59,5 +50,9 @@ public class MySQLSyncedController {
 
     public void releaseUnsafe() throws ExecutionException, InterruptedException {
         database.releaseUnsafe(objectId).get();
+    }
+
+    public CompletableFuture<Boolean> updateTimeout(HoldData data){
+        return database.updateTimeout(objectId, data);
     }
 }

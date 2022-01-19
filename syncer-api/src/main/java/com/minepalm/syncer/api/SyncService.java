@@ -4,10 +4,16 @@ import java.util.concurrent.CompletableFuture;
 
 public interface SyncService {
 
-    SyncStrategyRegistry getStrategyRegistry();
+    SyncPubSub getPubSub();
 
     SyncHolderRegistry getHolderRegistry();
 
     <T> Synced<T> of(T t);
+
+    <T> void register(Class<T> clazz, SyncToken<T> token);
+
+    <T> SyncToken<T> getToken(Class<T> clazz);
+
+    CompletableFuture<Void> releaseAll();
 
 }

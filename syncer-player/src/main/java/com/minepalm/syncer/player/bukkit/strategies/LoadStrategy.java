@@ -5,7 +5,6 @@ import org.bukkit.entity.Player;
 
 public interface LoadStrategy {
 
-    void onPlayerLoad(Player player, PlayerData data);
+    void applyPlayer(Player player, PlayerData data);
 
-    void onPlayerUnload(Player player, PlayerData data);
 }

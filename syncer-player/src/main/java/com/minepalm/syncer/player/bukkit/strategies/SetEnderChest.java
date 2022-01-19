@@ -9,14 +9,10 @@ import java.util.Map;
 public class SetEnderChest implements LoadStrategy{
 
     @Override
-    public void onPlayerLoad(Player player, PlayerData data) {
+    public void applyPlayer(Player player, PlayerData data) {
         for (Map.Entry<Integer, ItemStack> entry : data.getEnderChest().getItems().entrySet()) {
             player.getEnderChest().setItem(entry.getKey(), entry.getValue());
         }
     }
 
-    @Override
-    public void onPlayerUnload(Player player, PlayerData data) {
-
-    }
 }

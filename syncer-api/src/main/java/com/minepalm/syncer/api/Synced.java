@@ -3,7 +3,6 @@ package com.minepalm.syncer.api;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
 public interface Synced<T> {
@@ -12,25 +11,18 @@ public interface Synced<T> {
 
     String getObjectKey();
 
-    CompletableFuture<SyncStage> getStage();
-
-    CompletableFuture<SyncHolder> getHoldProxy();
-
     CompletableFuture<SyncHolder> getHoldServer();
 
     CompletableFuture<Boolean> isHold();
 
-    CompletableFuture<Boolean> transferHold(SyncHolder holder);
+    CompletableFuture<Boolean> updateTimeout(long timeToAdd);
 
-    boolean hold() throws ExecutionException, InterruptedException;
+    //CompletableFuture<Boolean> transferHold(SyncHolder holder);
 
-    boolean hold(Duration duration) throws ExecutionException, InterruptedException, TimeoutException;
+    void hold() throws ExecutionException, InterruptedException;
 
-    CompletableFuture<Void> releaseAsync();
+    void hold(Duration duration) throws ExecutionException, InterruptedException, TimeoutException;
 
-    void release() throws ExecutionException, InterruptedException;
-
-    CompletableFuture<Void> waitHoldingAsync(ExecutorService service);
-
+    void release();
 
 }

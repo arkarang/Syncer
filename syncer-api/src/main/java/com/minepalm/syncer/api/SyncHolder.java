@@ -6,7 +6,12 @@ public interface SyncHolder {
 
     String getName();
 
-    <T> CompletableFuture<Synced<T>> subscribe(T t);
+    CompletableFuture<Boolean> sendSubscribeWaiting(Synced<?> synced);
 
-    <T> void publish(T t);
+    //CompletableFuture<Boolean> sendTransferHolding(Synced<?> synced);
+
+    void sendObjectReleased(Synced<?> synced);
+
+    void sendObjectReleased(String objectId);
+
 }
