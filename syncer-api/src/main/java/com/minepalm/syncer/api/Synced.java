@@ -20,11 +20,11 @@ public interface Synced<T> {
 
     CompletableFuture<Boolean> isHold();
 
-    CompletableFuture<Void> transferHold(SyncHolder holder);
+    CompletableFuture<Boolean> transferHold(SyncHolder holder);
 
-    void hold() throws ExecutionException, InterruptedException;
+    boolean hold() throws ExecutionException, InterruptedException;
 
-    void hold(Duration duration, long time) throws ExecutionException, InterruptedException, TimeoutException;
+    boolean hold(Duration duration) throws ExecutionException, InterruptedException, TimeoutException;
 
     CompletableFuture<Void> releaseAsync();
 

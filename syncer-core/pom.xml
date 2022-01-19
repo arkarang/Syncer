@@ -23,6 +23,18 @@
             <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.minepalm</groupId>
+            <artifactId>hellobungee-api</artifactId>
+            <version>1.4.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.minepalm</groupId>
+            <artifactId>hellobungee-netty</artifactId>
+            <version>1.4.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <properties>

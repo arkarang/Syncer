@@ -1,0 +1,7 @@
+MySQL: {}
+flags:
+  - 'level'
+  - 'exp'
+  - 'food'
+  - 'enderchest'
+  - 'inventory'

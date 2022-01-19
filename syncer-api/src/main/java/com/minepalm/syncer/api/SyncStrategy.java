@@ -4,9 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 public interface SyncStrategy<T> {
 
-    CompletableFuture<Void> onAcquiredLock(T t);
-
-    void onSynchronizedComplete(T t);
+    CompletableFuture<Void> onSynchronizedComplete(T t);
 
     void onReleased(T t);
 
