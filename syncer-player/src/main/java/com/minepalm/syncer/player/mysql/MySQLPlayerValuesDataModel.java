@@ -15,7 +15,7 @@ public class MySQLPlayerValuesDataModel {
     private final String table;
     private final MySQLDatabase database;
 
-    void init(){
+    public void init(){
         database.execute(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
@@ -56,7 +56,7 @@ public class MySQLPlayerValuesDataModel {
     CompletableFuture<Void> save(UUID uuid, PlayerDataValues values){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" " +
-                    "(`uuid`, `health`, `level`, `foodlLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot`) " +
+                    "(`uuid`, `health`, `level`, `foodLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot`) " +
                     "VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON DUPLICATE KEY UPDATE " +
                     "`health`=VALUES(`health`), " +
@@ -64,7 +64,7 @@ public class MySQLPlayerValuesDataModel {
                     "`foodLevel`=VALUES(`foodLevel`), " +
                     "`exp`=VALUES(`exp`), " +
                     "`saturation`=VALUES(`saturation`), " +
-                    "`exhaustion`=VALUES(`exhaustion`)" +
+                    "`exhaustion`=VALUES(`exhaustion`), " +
                     "`heldSlot`=VALUES(`heldSlot`);");
             ps.setString(1, uuid.toString());
             ps.setDouble(2, values.getHealth());

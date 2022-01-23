@@ -9,6 +9,7 @@ import org.bukkit.entity.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +22,8 @@ public class UpdateTimeoutLoop {
 
     private final ExecutorService service;
     private final Syncer syncer;
+    private final PlayerDataStorage storage;
+    private final PlayerApplier applier;
     private final long periodMills;
     private final Logger logger;
     private final AtomicBoolean run = new AtomicBoolean(false);
@@ -56,8 +59,11 @@ public class UpdateTimeoutLoop {
             val future = synced.updateTimeout(periodMills);
             future.thenAccept(completed -> {
                 if(!completed){
-                    logger.warning("extending player lock player "+uuid+" is failed. is player offline?");
+                    logger.warning("extending player lock timeout "+uuid+" is failed. is player offline?");
                 }
+            });
+            Optional.ofNullable(Bukkit.getPlayer(uuid)).ifPresent(player->{
+                futures.add(storage.save(uuid, applier.extract(player)));
             });
             futures.add(future);
         }

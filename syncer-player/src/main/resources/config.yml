@@ -1,7 +1,12 @@
-MySQL: {}
+TravelLibrary:
+  mysql: 'default'
+extendingTimeoutPeriodMills: 50000
+joinTimeoutMills: 5000
 flags:
-  - 'level'
-  - 'exp'
-  - 'food'
   - 'enderchest'
+  - 'equipments'
+  #- 'level'
+  #- 'exp'
+  #- 'hungers'
   - 'inventory'
+  - 'currentHealth'

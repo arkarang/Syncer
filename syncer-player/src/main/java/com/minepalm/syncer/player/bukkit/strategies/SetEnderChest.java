@@ -11,7 +11,9 @@ public class SetEnderChest implements LoadStrategy{
     @Override
     public void applyPlayer(Player player, PlayerData data) {
         for (Map.Entry<Integer, ItemStack> entry : data.getEnderChest().getItems().entrySet()) {
-            player.getEnderChest().setItem(entry.getKey(), entry.getValue());
+            if(entry.getKey() < 27 && entry.getKey() >= 0) {
+                player.getEnderChest().setItem(entry.getKey(), entry.getValue());
+            }
         }
     }
 

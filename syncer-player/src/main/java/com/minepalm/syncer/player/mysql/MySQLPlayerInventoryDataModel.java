@@ -19,7 +19,7 @@ public class MySQLPlayerInventoryDataModel {
     private final String table;
     private final MySQLDatabase database;
 
-    void init(){
+    public void init(){
         database.execute(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +

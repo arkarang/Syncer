@@ -29,7 +29,11 @@ public class PlayerDataController {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
                 PlayerDataEnderChest enderChestData = enderChest.get();
-                return new PlayerData(uuid, data, inv, enderChestData);
+                if(inv != null && data != null && enderChestData != null) {
+                    return new PlayerData(uuid, data, inv, enderChestData);
+                }else{
+                    return null;
+                }
             }catch (InterruptedException | ExecutionException e){
                 return null;
             }

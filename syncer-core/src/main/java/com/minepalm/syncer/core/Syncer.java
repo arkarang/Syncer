@@ -26,8 +26,10 @@ public class Syncer implements SyncService {
     public Syncer(MySQLDatabase database, HelloEveryone network){
         this.holderRegistry = new HolderRegistry(network.getName());
         this.pubSub = new HelloBungeePubSubs(this.holderRegistry);
-        HelloBungeeInitializer.initialize(this, network);
         this.database = new MySQLSyncStatusDatabase("syncer_status", database);
+        this.factory = new SyncedFactory(holderRegistry, pubSub, this.database);
+
+        HelloBungeeInitializer.initialize(this, network);
         this.database.init();
     }
 

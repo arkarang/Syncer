@@ -3,13 +3,17 @@ package com.minepalm.syncer.player.bukkit;
 import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class PlayerModifier {
+public class PlayerApplier {
 
     ConcurrentHashMap<String, LoadStrategy> strategies = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, Boolean> activates = new ConcurrentHashMap<>();
 
-    public void addStrategy(String name, LoadStrategy strategy){
+    public void registerStrategy(String name, LoadStrategy strategy){
         strategies.put(name, strategy);
     }
 
@@ -24,8 +28,21 @@ public class PlayerModifier {
         }
     }
 
+    public void setActivate(String name, boolean b){
+        activates.put(name, b);
+    }
+
     void apply(Player player, PlayerData data){
-        for (LoadStrategy strategy : strategies.values()) {
+        List<String> keys = new ArrayList<>();
+
+        for (Map.Entry<String, Boolean> entry : activates.entrySet()) {
+            if(entry.getValue()){
+                keys.add(entry.getKey());
+            }
+        }
+
+        for (String key : keys) {
+            LoadStrategy strategy = strategies.get(key);
             strategy.applyPlayer(player, data);
         }
     }

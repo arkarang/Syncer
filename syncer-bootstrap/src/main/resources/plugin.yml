@@ -1,0 +1,7 @@
+main: com.minepalm.syncer.bootstrap.SyncerBukkit
+name: Syncer
+author: Arkarang
+version: 1.0.0
+depend:
+  - TravelLibrary
+  - HelloBukkit

@@ -1,0 +1,8 @@
+main: com.minepalm.syncer.player.bukkit.PlayerSyncer
+name: PlayerSyncer
+author: Arkarang
+version: 1.0.0
+depend:
+  - TravelLibrary
+  - BungeeJump
+  - Syncer

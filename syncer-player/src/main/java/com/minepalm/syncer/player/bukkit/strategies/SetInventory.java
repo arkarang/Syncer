@@ -14,7 +14,11 @@ public class SetInventory implements LoadStrategy{
         for(int i = 0; i < 36; i++){
             player.getInventory().setItem(0, new ItemStack(Material.AIR));
         }
-        data.getInventory().getItems().forEach((slot, item)-> player.getInventory().setItem(slot, item));
+        for (Map.Entry<Integer, ItemStack> entry : data.getInventory().getItems().entrySet()) {
+            if(entry.getKey() < 36 && entry.getKey() >= 0) {
+                player.getInventory().setItem(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
 }

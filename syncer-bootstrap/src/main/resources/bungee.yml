@@ -1,0 +1,7 @@
+main: com.minepalm.syncer.bootstrap.SyncerBungee
+name: Syncer
+author: Arkarang
+version: 1.0.0
+depends:
+  - TravelLibrary
+  - HelloBungee

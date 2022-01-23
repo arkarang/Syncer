@@ -5,14 +5,12 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PlayerDataInventory {
 
     private static final int HELMET = 39, CHEST = 38, LEGGINGS = 37, BOOTS = 36, OFF_HAND = 40;
+    private static final ItemStack AIR = new ItemStack(Material.AIR);
 
     private final ImmutableMap<Integer, ItemStack> items;
 
@@ -31,11 +29,7 @@ public class PlayerDataInventory {
     public List<ItemStack> getStorageItems(){
         List<ItemStack> items = new ArrayList<>();
         for(int i = 0; i < 36; i++){
-            if(this.items.containsKey(i)){
-                items.add(this.items.get(i));
-            }else{
-                items.add(new ItemStack(Material.AIR));
-            }
+            items.add(this.items.getOrDefault(i, AIR));
         }
         return items;
     }
@@ -64,14 +58,19 @@ public class PlayerDataInventory {
         HashMap<Integer, ItemStack> items = new HashMap<>();
 
         for(int i = 0; i < 36; i++){
-            items.put(i, playerInventory.getItem(i).clone());
+            ItemStack item = playerInventory.getItem(i);
+            if(item != null) {
+                items.put(i, item.clone());
+            }else{
+                items.put(i, AIR);
+            }
         }
 
-        items.put(HELMET, playerInventory.getBoots().clone());
-        items.put(CHEST, playerInventory.getChestplate().clone());
-        items.put(LEGGINGS, playerInventory.getLeggings().clone());
-        items.put(BOOTS, playerInventory.getBoots().clone());
-        items.put(OFF_HAND, playerInventory.getItemInOffHand().clone());
+        items.put(HELMET, Optional.ofNullable(playerInventory.getBoots()).orElse(AIR).clone());
+        items.put(CHEST, Optional.ofNullable(playerInventory.getChestplate()).orElse(AIR).clone());
+        items.put(LEGGINGS, Optional.ofNullable(playerInventory.getLeggings()).orElse(AIR).clone());
+        items.put(BOOTS, Optional.ofNullable(playerInventory.getBoots()).orElse(AIR).clone());
+        items.put(OFF_HAND, Optional.ofNullable(playerInventory.getItemInOffHand()).orElse(AIR).clone());
 
         return new PlayerDataInventory(items);
     }

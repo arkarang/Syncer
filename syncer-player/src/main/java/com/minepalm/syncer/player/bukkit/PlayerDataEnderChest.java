@@ -12,6 +12,8 @@ import java.util.Map;
 
 public class PlayerDataEnderChest {
 
+    private static final ItemStack AIR = new ItemStack(Material.AIR);
+
     private final ImmutableMap<Integer, ItemStack> items;
 
     private PlayerDataEnderChest(Map<Integer, ItemStack> items){
@@ -28,7 +30,7 @@ public class PlayerDataEnderChest {
 
     public List<ItemStack> getStorageItems(){
         List<ItemStack> items = new ArrayList<>();
-        for(int i = 0; i < 36; i++){
+        for(int i = 0; i < 27; i++){
             if(this.items.containsKey(i)){
                 items.add(this.items.get(i));
             }else{
@@ -41,10 +43,14 @@ public class PlayerDataEnderChest {
     public static PlayerDataEnderChest of(Inventory enderChest){
         HashMap<Integer, ItemStack> items = new HashMap<>();
 
-        for(int i = 0; i < 36; i++){
-            items.put(i, enderChest.getItem(i).clone());
+        for(int i = 0; i < 27; i++){
+            ItemStack item = enderChest.getItem(i);
+            if(item != null) {
+                items.put(i, item.clone());
+            }else{
+                items.put(i, AIR);
+            }
         }
-
         return new PlayerDataEnderChest(items);
     }
 
@@ -53,8 +59,8 @@ public class PlayerDataEnderChest {
     }
 
     public ItemStack[] toArray(){
-        ItemStack[] items = new ItemStack[36];
-        for(int i = 0 ; i < 36; i++){
+        ItemStack[] items = new ItemStack[27];
+        for(int i = 0 ; i < 27; i++){
             ItemStack item = null;
             if(this.items.containsKey(i)){
                 item = this.items.get(i);

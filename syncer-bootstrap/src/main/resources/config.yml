@@ -1,0 +1,3 @@
+initProcedure: true
+TravelLibrary:
+  mysql: 'default'

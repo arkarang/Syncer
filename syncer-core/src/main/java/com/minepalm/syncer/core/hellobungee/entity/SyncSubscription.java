@@ -46,7 +46,7 @@ public class SyncSubscription {
         public SyncSubRequest decode(ByteBuf byteBuf) {
             String objectId = ByteBufUtils.readString(byteBuf);
             String sender = ByteBufUtils.readString(byteBuf);
-            return new SyncSubRequest(objectId, sender);
+            return new SyncSubRequest(sender, objectId);
         }
     }
 
@@ -60,7 +60,7 @@ public class SyncSubscription {
         @Override
         public void encode(ByteBuf byteBuf, SyncSubResult result) {
             byteBuf.writeBoolean(result.isAccepted());
-            ByteBufUtils.writeString(byteBuf, result.getObjectId());
+            ByteBufUtils.writeString(byteBuf, result.getRequester());
             ByteBufUtils.writeString(byteBuf, result.getObjectId());
         }
 

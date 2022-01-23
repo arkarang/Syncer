@@ -4,7 +4,6 @@ import com.minepalm.syncer.api.*;
 import com.minepalm.syncer.core.mysql.MySQLSyncStatusDatabase;
 import com.minepalm.syncer.core.mysql.MySQLSyncedController;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 import java.util.concurrent.ConcurrentHashMap;
 

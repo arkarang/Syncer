@@ -11,7 +11,7 @@ import com.minepalm.syncer.core.hellobungee.executors.SyncSubscriptionCallback;
 public class HelloBungeeInitializer {
 
     public static void initialize(SyncService service, HelloEveryone networkModule){
-        networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(new HelloBungeeSyncHolder(sender)));
+        networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(new HelloBungeeSyncHolder(service.getHolderRegistry(), sender)));
         networkModule.getCallbackService().registerTransformer(new SyncSubscriptionCallback(service.getPubSub()));
         networkModule.getHandler().registerExecutor(new SyncReleaseLockExecutor((Syncer)service));
         networkModule.getGateway().registerAdapter(new SyncReleasedLock.Adapter());

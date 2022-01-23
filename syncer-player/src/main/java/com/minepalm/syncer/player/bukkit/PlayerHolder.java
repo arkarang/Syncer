@@ -15,4 +15,9 @@ public class PlayerHolder {
         return Bukkit.getPlayer(uuid);
     }
 
+    @Override
+    public String toString(){
+        return uuid.toString();
+    }
+
 }
