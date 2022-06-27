@@ -3,11 +3,14 @@ package com.minepalm.syncer.player.bukkit;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.api.SyncService;
 import com.minepalm.syncer.api.Synced;
+import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,29 +25,38 @@ public class PlayerLoader {
     private final SyncService service;
     private final BukkitExecutor executor;
     private final TimestampLogger logger;
+    private final long updatePeriodMills;
     private final long userTimeoutMills;
+    private final ConcurrentHashMap<String, LoadStrategy> customLoadStrategies = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, PlayerData> cachedData = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<UUID, Boolean> passed = new ConcurrentHashMap<>();
 
-    public boolean load(UUID uuid) throws ExecutionException, InterruptedException{
+    public void register(String key, LoadStrategy strategy){
+        customLoadStrategies.put(key, strategy);
+    }
+
+    public LoadResult load(UUID uuid) throws ExecutionException, InterruptedException{
         PlayerHolder holder = new PlayerHolder(uuid);
         Synced<PlayerHolder> synced = service.of(holder);
 
         cachedData.remove(uuid);
 
         try {
-            synced.hold(Duration.ofMillis(50000L), userTimeoutMills);
+            synced.hold(Duration.ofMillis(5000L+updatePeriodMills), userTimeoutMills);
             logger.log("uuid: "+uuid.toString()+" acquired player lock");
             PlayerData data = storage.getPlayerData(uuid).get();
+            List<CompletableFuture<?>> list = new ArrayList<>();
+            for (LoadStrategy strategy : customLoadStrategies.values()) {
+                list.add(strategy.onLoad(uuid));
+            }
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get();
             cachedData.put(uuid, data);
             logger.log("uuid: "+uuid.toString()+" pre login successful");
-            return true;
+            return LoadResult.SUCCESS;
         }catch (TimeoutException e){
             logger.log("uuid: "+uuid.toString()+"pre login timeout");
+            return LoadResult.TIMEOUT;
         }
-
-        logger.log("uuid: "+uuid.toString()+" pre login failed");
-        return false;
 
     }
 
@@ -56,6 +68,9 @@ public class PlayerLoader {
             if(data != null) {
                 modifier.inject(player, cachedData.get(uuid));
                 logger.log(player, "successfully inject player data");
+                for (LoadStrategy strategy : customLoadStrategies.values()) {
+                    strategy.onApply(uuid);
+                }
             }else{
                 logger.log(player, "skip null data");
             }
@@ -68,55 +83,79 @@ public class PlayerLoader {
         return false;
     }
 
-    public void save(Player player){
+    public void saveRuntime(Player player){
+        logger.log(player, " save start");
         UUID uuid = player.getUniqueId();
 
         if(passed.containsKey(uuid)){
+            logger.log(player, " passed ");
             passed.remove(uuid);
-            return;
-        }
+        }else {
+            executor.async(() -> {
+                logger.log(player, " start async player save logic ");
+                PlayerHolder holder = new PlayerHolder(uuid);
+                Synced<PlayerHolder> synced = service.of(holder);
 
-        executor.async(()->{
-            PlayerHolder holder = new PlayerHolder(uuid);
-            Synced<PlayerHolder> synced = service.of(holder);
-
-            try {
                 try {
-                    synced.hold(Duration.ofMillis(4000L), userTimeoutMills);
-                    PlayerData data = modifier.extract(player);
-                    storage.save(uuid, data);
-                    logger.log(player, "save complete");
-                } catch (TimeoutException e) {
-                    logger.log(player, "timeout saving player inventory");
-                } finally {
-                    logger.log(player, "release player lock");
-                    synced.release();
+                    try {
+                        synced.hold(Duration.ofMillis(4000L), userTimeoutMills);
+                        PlayerData data = modifier.extract(player);
+                        storage.save(uuid, data);
+                        List<CompletableFuture<?>> list = new ArrayList<>();
+                        for (LoadStrategy strategy : customLoadStrategies.values()) {
+                            list.add(strategy.onUnload(uuid));
+                        }
+                        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get();
+                        logger.log(player, "save complete");
+                    } catch (TimeoutException e) {
+                        logger.log(player, "timeout saving player inventory");
+                    } finally {
+                        logger.log(player, "release player lock");
+                        synced.release();
+                    }
+                } catch (ExecutionException | InterruptedException ignored) {
+
                 }
-            }catch (ExecutionException | InterruptedException ignored) {
 
-            }
-
-        });
+            });
+        }
     }
 
-    public void preTeleportSave(CompletableFuture<?> future, UUID uuid){
+    public CompletableFuture<Void> saveDisabled(UUID uuid, PlayerData data){
+        PlayerHolder holder = new PlayerHolder(uuid);
+        Synced<PlayerHolder> synced = service.of(holder);
+        try {
+            try {
+                synced.hold(Duration.ofMillis(4000L), userTimeoutMills);
+                List<CompletableFuture<?>> list = new ArrayList<>();
+                for (LoadStrategy strategy : customLoadStrategies.values()) {
+                    list.add(strategy.onUnload(uuid));
+                }
+                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get();
+                return storage.save(uuid, data);
+            } finally {
+                synced.release();
+            }
+        } catch (ExecutionException | InterruptedException | TimeoutException ex) {
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    public void preTeleportSave(UUID uuid){
+        logger.log(uuid+" preTeleport save start");
         Player player = Bukkit.getPlayer(uuid);
         if(player != null) {
-            this.save(player);
+            this.saveRuntime(player);
             this.markPass(uuid);
-            logger.log(player, "complete saving player data before teleport ");
-            future.thenRun(()->{
-                try {
-                    service.of(new PlayerHolder(uuid)).release();
-                    logger.log(player, "released player lock after teleport ");
-                } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
+            logger.log(player, "complete preTeleport request ");
         }
     }
 
     public void markPass(UUID uuid){
         passed.put(uuid, true);
+    }
+
+    public void unmark(UUID uuid){
+        passed.remove(uuid);
     }
 }

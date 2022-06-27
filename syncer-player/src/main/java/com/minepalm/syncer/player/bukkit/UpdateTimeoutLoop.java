@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class UpdateTimeoutLoop {
@@ -25,10 +24,11 @@ public class UpdateTimeoutLoop {
     private final PlayerDataStorage storage;
     private final PlayerApplier applier;
     private final long periodMills;
-    private final Logger logger;
+    private final TimestampLogger logger;
     private final AtomicBoolean run = new AtomicBoolean(false);
 
     synchronized void start(){
+        run.set(true);
         service.submit(()->{
             while (run.get()){
                 try {
@@ -59,13 +59,18 @@ public class UpdateTimeoutLoop {
             val future = synced.updateTimeout(periodMills);
             future.thenAccept(completed -> {
                 if(!completed){
-                    logger.warning("extending player lock timeout "+uuid+" is failed. is player offline?");
+                    logger.warn("extending player lock timeout "+uuid+" is failed. is player offline?");
+                }else{
+                    Optional.ofNullable(Bukkit.getPlayer(uuid)).ifPresent(player->{
+                        val future2 = storage.save(uuid, applier.extract(player));
+                        futures.add(future2);
+                        future2.thenRun(()->{
+                            logger.log(player, "auto save completed");
+                        });
+                    });
+                    futures.add(future);
                 }
             });
-            Optional.ofNullable(Bukkit.getPlayer(uuid)).ifPresent(player->{
-                futures.add(storage.save(uuid, applier.extract(player)));
-            });
-            futures.add(future);
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get();

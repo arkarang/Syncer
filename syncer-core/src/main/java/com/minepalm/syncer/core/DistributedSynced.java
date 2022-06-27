@@ -55,26 +55,6 @@ public class DistributedSynced<T> implements Synced<T> {
         return controller.updateTimeout(generateData(getObjectKey()).setTime(timeToAdd));
     }
 
-    //@Override
-    /*
-    public synchronized CompletableFuture<Boolean> transferHold(SyncHolder holder) {
-        return controller.holdUnsafeAsync(new HoldData(getObjectKey(), holder.getName(), System.currentTimeMillis() + 5000L))
-                .thenCompose(ignored -> controller.getHoldServer())
-                .thenCompose(serverName -> {
-                    if(serverName == null){
-                        return CompletableFuture.completedFuture(false);
-                    } else{
-                        return holderRegistry.getHolder(serverName).sendTransferHolding(this);
-                    }
-
-                })
-                .thenApply(result -> {
-                    pubSub.invokeRetryLock(this);
-                    return result;
-                });
-    }
-     */
-
     @Override
     public synchronized void hold(Duration duration) throws ExecutionException, InterruptedException {
         try {
@@ -119,7 +99,7 @@ public class DistributedSynced<T> implements Synced<T> {
                 park(timeoutTime - currentTime);
             }
 
-            return tryAcquireLock(issuedTime, duration, timeoutAmount);
+            return tryAcquireLock(issuedTime, duration, timeout);
         }else{
             this.acquired.set(true);
             pubSub.openSubscription(this);

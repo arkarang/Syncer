@@ -13,6 +13,11 @@ public class PlayerDataInventory {
     private static final ItemStack AIR = new ItemStack(Material.AIR);
 
     private final ImmutableMap<Integer, ItemStack> items;
+    private final long generatedTime = System.currentTimeMillis();
+
+    public long getGeneratedTime() {
+        return generatedTime;
+    }
 
     private PlayerDataInventory(Map<Integer, ItemStack> items){
         this.items = ImmutableMap.copyOf(items);
@@ -66,7 +71,7 @@ public class PlayerDataInventory {
             }
         }
 
-        items.put(HELMET, Optional.ofNullable(playerInventory.getBoots()).orElse(AIR).clone());
+        items.put(HELMET, Optional.ofNullable(playerInventory.getHelmet()).orElse(AIR).clone());
         items.put(CHEST, Optional.ofNullable(playerInventory.getChestplate()).orElse(AIR).clone());
         items.put(LEGGINGS, Optional.ofNullable(playerInventory.getLeggings()).orElse(AIR).clone());
         items.put(BOOTS, Optional.ofNullable(playerInventory.getBoots()).orElse(AIR).clone());
@@ -80,8 +85,8 @@ public class PlayerDataInventory {
     }
 
     public ItemStack[] toArray(){
-        ItemStack[] items = new ItemStack[40];
-        for(int i = 0 ; i < 40; i++){
+        ItemStack[] items = new ItemStack[41];
+        for(int i = 0 ; i < 41; i++){
             ItemStack item = null;
             if(this.items.containsKey(i)){
                 item = this.items.get(i);

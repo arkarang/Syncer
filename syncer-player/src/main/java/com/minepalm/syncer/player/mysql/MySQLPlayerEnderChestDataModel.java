@@ -40,7 +40,7 @@ public class MySQLPlayerEnderChestDataModel {
                 try {
                     HashMap<Integer, ItemStack> map = new HashMap<>();
                     ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(rs.getString(1));
-                    for(int i = 0 ; i < 36 ; i++){
+                    for(int i = 0 ; i < items.length ; i++){
                         map.put(i, items[i]);
                     }
 
@@ -50,7 +50,7 @@ public class MySQLPlayerEnderChestDataModel {
                 }
             }
 
-            return PlayerDataEnderChest.empty();
+            return null;
 
         });
     }

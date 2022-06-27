@@ -6,3 +6,6 @@ depend:
   - TravelLibrary
   - BungeeJump
   - Syncer
+commands:
+  psalter:
+    description: 'asdfasdf'

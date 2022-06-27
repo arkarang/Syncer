@@ -6,6 +6,7 @@ import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
 import com.minepalm.syncer.player.bukkit.PlayerDataValues;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.bukkit.Bukkit;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +30,9 @@ public class PlayerDataController {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
                 PlayerDataEnderChest enderChestData = enderChest.get();
-                if(inv != null && data != null && enderChestData != null) {
-                    return new PlayerData(uuid, data, inv, enderChestData);
-                }else{
-                    return null;
-                }
+                return new PlayerData(uuid, data, inv, enderChestData);
             }catch (InterruptedException | ExecutionException e){
-                return null;
+                return new PlayerData(uuid, null, null, null);
             }
         });
     }
@@ -45,7 +42,29 @@ public class PlayerDataController {
         val valuesFuture = valuesDataModel.save(uuid, data.getValues());
         val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
 
+        inventoryFuture.thenAccept(triedDuplicated -> {
+            if(triedDuplicated){
+                Bukkit.getLogger().warning("found tried duplicate saving "+data.getUuid());
+            }
+        });
+
         return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
     }
+
+    public CompletableFuture<Void> save(PlayerData data, long afterMills){
+        return CompletableFuture.runAsync(()->{
+            try {
+                Thread.sleep(afterMills);
+            }catch (Throwable e){
+
+            }
+        }).thenCompose(ignored -> {
+            val inventoryFuture = inventoryDataModel.save(uuid, data.getInventory());
+            val valuesFuture = valuesDataModel.save(uuid, data.getValues());
+            val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
+            return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
+        });
+    }
+
 
 }

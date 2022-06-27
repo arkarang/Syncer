@@ -1,10 +1,13 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
-import org.bukkit.entity.Player;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public interface LoadStrategy {
 
-    void applyPlayer(Player player, PlayerData data);
+    CompletableFuture<Void> onLoad(UUID uuid);
 
+    CompletableFuture<Void> onUnload(UUID uuid);
+
+    void onApply(UUID uuid);
 }

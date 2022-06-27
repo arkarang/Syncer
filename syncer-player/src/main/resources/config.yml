@@ -1,5 +1,6 @@
 TravelLibrary:
   mysql: 'default'
+logResult: true
 extendingTimeoutPeriodMills: 50000
 joinTimeoutMills: 5000
 flags:
@@ -10,3 +11,10 @@ flags:
   #- 'hungers'
   - 'inventory'
   - 'currentHealth'
+  - 'fly'
+  - 'gamemode'
+Message:
+  #대부분의 경의 호출되는 킥 메세지입니다. Timeout이 아니라, 로직상 문제로 /server 같은거 써서 이동할때도 이 메세지가 뜹니다.
+  KICK_TIMEOUT: '&6서버가 바빠요. 다시 접속해주세요.'
+  #플레이어가 AsyncPreLoginEvent 를 띄우지 않고 접속하는 경우 ( 거의 일어나지 않습니다. )
+  KICK_ILLEGAL_JOIN: '&6올바르지 않은 접속 시도입니다. 다시 접속해주세요.'

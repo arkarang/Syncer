@@ -4,6 +4,7 @@ import com.minepalm.arkarangutils.compress.CompressedInventorySerializer;
 import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.PreparedStatement;
@@ -25,8 +26,16 @@ public class MySQLPlayerInventoryDataModel {
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`uuid` VARCHAR(36), " +
                     "`data` TEXT, " +
+                    "`generated_time` BIGINT DEFAULT 0, "+
                     "PRIMARY KEY(`uuid`)) " +
                     "charset=utf8mb4");
+            ps.execute();
+        });
+    }
+
+    public void alter(){
+        database.execute(connection -> {
+            PreparedStatement ps = connection.prepareStatement("ALTER TABLE "+table+" ADD COLUMN `generated_time` BIGINT DEFAULT 0");
             ps.execute();
         });
     }
@@ -41,7 +50,7 @@ public class MySQLPlayerInventoryDataModel {
                 try {
                     HashMap<Integer, ItemStack> map = new HashMap<>();
                     ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(rs.getString(1));
-                    for(int i = 0 ; i < 36 ; i++){
+                    for(int i = 0 ; i < items.length ; i++){
                         map.put(i, items[i]);
                     }
 
@@ -51,17 +60,36 @@ public class MySQLPlayerInventoryDataModel {
                 }
             }
 
-            return PlayerDataInventory.empty();
+            return null;
 
         });
     }
 
-    CompletableFuture<Void> save(UUID uuid, PlayerDataInventory inventory){
+    CompletableFuture<Boolean> save(UUID uuid, PlayerDataInventory inventory){
         return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" (`uuid`, `data`) VALUES(?, ?) ON DUPLICATE KEY UPDATE `data`=VALUES(`data`)");
-            ps.setString(1, uuid.toString());
-            ps.setString(2, CompressedInventorySerializer.itemStackArrayToBase64(inventory.toArray()));
-            ps.execute();
+            try {
+                connection.setAutoCommit(false);
+                PreparedStatement select = connection.prepareStatement("SELECT `generated_time` FROM " + table + " WHERE `uuid`=?");
+                select.setString(1, uuid.toString());
+                ResultSet rs = select.executeQuery();
+                long generatedTime = 0;
+                if(rs.next()){
+                    generatedTime = rs.getLong(1);
+                }
+                if(generatedTime < inventory.getGeneratedTime()){
+                    PreparedStatement ps = connection.prepareStatement("INSERT INTO " + table + " (`uuid`, `data`, `generated_time`) VALUES(?, ?, ?) " +
+                            "ON DUPLICATE KEY UPDATE `data`=VALUES(`data`), `generated_time`=VALUES(`generated_time`)");
+                    ps.setString(1, uuid.toString());
+                    ps.setString(2, CompressedInventorySerializer.itemStackArrayToBase64(inventory.toArray()));
+                    ps.setLong(3, inventory.getGeneratedTime());
+                    ps.execute();
+                }else{
+                    return false;
+                }
+                connection.commit();
+            }finally {
+                connection.setAutoCommit(true);
+            }
             return null;
         });
     }

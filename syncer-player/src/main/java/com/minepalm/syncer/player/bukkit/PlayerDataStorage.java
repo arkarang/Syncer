@@ -4,11 +4,13 @@ import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerValuesDataModel;
 import com.minepalm.syncer.player.mysql.PlayerDataController;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+@Getter
 @RequiredArgsConstructor
 public class PlayerDataStorage {
 
@@ -20,12 +22,16 @@ public class PlayerDataStorage {
         return new PlayerDataController(uuid, inventoryDataModel, valuesDataModel, enderChestDataModel);
     }
 
-    CompletableFuture<PlayerData> getPlayerData(UUID uuid) {
+    public CompletableFuture<PlayerData> getPlayerData(UUID uuid) {
         return getController(uuid).load();
     }
 
-    CompletableFuture<Void> save(UUID uuid, PlayerData data){
+    public CompletableFuture<Void> save(UUID uuid, PlayerData data){
         return getController(uuid).save(data);
+
+    }
+    public CompletableFuture<Void> save(UUID uuid, PlayerData data, long afterMills){
+        return getController(uuid).save(data, afterMills);
 
     }
 }

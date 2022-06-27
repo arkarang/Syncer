@@ -36,8 +36,8 @@ public class SyncTest {
 
         database.connect(config);
 
-        HelloEveryone network1 = new HelloMain("test1", 25600, 12345, 67890, Executors.newSingleThreadExecutor(), Logger.getLogger("global"));
-        HelloEveryone network2 = new HelloMain("test2", 25601, 12345, 67890, Executors.newSingleThreadExecutor(), Logger.getLogger("global"));
+        HelloEveryone network1 = new HelloMain("test1", new InetSocketAddress(25600), 12345, 67890, Logger.getLogger("global"));
+        HelloEveryone network2 = new HelloMain("test2", new InetSocketAddress(25601), 12345, 67890, Logger.getLogger("global"));
 
         network1.getConnections().registerServerInfo("test2", new InetSocketAddress("127.0.0.1", 25601));
         network2.getConnections().registerServerInfo("test1", new InetSocketAddress("127.0.0.1", 25600));

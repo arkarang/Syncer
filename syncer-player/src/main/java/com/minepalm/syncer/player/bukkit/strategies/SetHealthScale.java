@@ -3,7 +3,7 @@ package com.minepalm.syncer.player.bukkit.strategies;
 import com.minepalm.syncer.player.bukkit.PlayerData;
 import org.bukkit.entity.Player;
 
-public class SetExp implements ApplyStrategy {
+public class SetHealthScale implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
@@ -11,7 +11,7 @@ public class SetExp implements ApplyStrategy {
             return;
         }
 
-        player.setExp(data.getValues().getExp());
+        player.setHealthScaled(true);
+        player.setHealthScale(data.getValues().getHealthScale());
     }
-
 }

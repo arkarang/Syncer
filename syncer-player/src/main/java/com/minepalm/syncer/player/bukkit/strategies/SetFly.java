@@ -1,9 +1,10 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
 import com.minepalm.syncer.player.bukkit.PlayerData;
+import net.minecraft.server.v1_12_R1.EntityLiving;
 import org.bukkit.entity.Player;
 
-public class SetExp implements ApplyStrategy {
+public class SetFly implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
@@ -11,7 +12,10 @@ public class SetExp implements ApplyStrategy {
             return;
         }
 
-        player.setExp(data.getValues().getExp());
+        boolean isFly = data.getValues().isFly();
+        player.setAllowFlight(isFly);
+        player.setFlying(isFly);
+        EntityLiving asdf;
     }
 
 }

@@ -9,11 +9,23 @@ import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class TimestampLogger {
+
     private final Logger logger;
     SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSSS");
+    boolean enabled;
+
+    void setLog(boolean b){
+        this.enabled = b;
+    }
 
     public void log(String message){
-        logger.info(format.format(new Date())+" "+message);
+        if(enabled)
+            logger.info(format.format(new Date())+" "+message);
+    }
+
+    public void warn(String message){
+        if(enabled)
+            logger.warning(format.format(new Date())+" "+message);
     }
 
     public void log(Player player, String message){

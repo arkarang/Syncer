@@ -1,23 +1,27 @@
 package com.minepalm.syncer.player.bukkit;
 
-import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
+import com.minepalm.syncer.player.bukkit.strategies.ApplyStrategy;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@RequiredArgsConstructor
 public class PlayerApplier {
 
-    ConcurrentHashMap<String, LoadStrategy> strategies = new ConcurrentHashMap<>();
-    ConcurrentHashMap<String, Boolean> activates = new ConcurrentHashMap<>();
+    private final TimestampLogger logger;
+    private final List<String> orders = new ArrayList<>();
+    private final ConcurrentHashMap<String, ApplyStrategy> strategies = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> activates = new ConcurrentHashMap<>();
 
-    public void registerStrategy(String name, LoadStrategy strategy){
+    public void registerStrategy(String name, ApplyStrategy strategy){
         strategies.put(name, strategy);
+        orders.add(name);
     }
 
-    void inject(Player player, PlayerData data){
+    public void inject(Player player, PlayerData data){
         PlayerData extracted = this.extract(player);
 
         try{
@@ -32,22 +36,21 @@ public class PlayerApplier {
         activates.put(name, b);
     }
 
-    void apply(Player player, PlayerData data){
-        List<String> keys = new ArrayList<>();
-
-        for (Map.Entry<String, Boolean> entry : activates.entrySet()) {
-            if(entry.getValue()){
-                keys.add(entry.getKey());
+    public void apply(Player player, PlayerData data){
+        for (String key : orders) {
+            if(activates.containsKey(key)) {
+                ApplyStrategy strategy = strategies.get(key);
+                try {
+                    logger.log(player.getName()+": try apply "+key);
+                    strategy.applyPlayer(player, data);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
             }
-        }
-
-        for (String key : keys) {
-            LoadStrategy strategy = strategies.get(key);
-            strategy.applyPlayer(player, data);
         }
     }
 
-    PlayerData extract(Player player){
+    public PlayerData extract(Player player){
         double health = player.getHealth();
         int level = player.getLevel();
         int foodLevel = player.getFoodLevel();
@@ -55,7 +58,10 @@ public class PlayerApplier {
         float saturation = player.getSaturation();
         float exhaustion = player.getExhaustion();
         int heldSlot = player.getInventory().getHeldItemSlot();
-        PlayerDataValues values = new PlayerDataValues(health, level, foodLevel, exp, saturation, exhaustion, heldSlot);
+        int gamemode = player.getGameMode().getValue();
+        boolean isFly = player.isFlying();
+        double healthScale = player.getHealthScale();
+        PlayerDataValues values = new PlayerDataValues(health, healthScale, level, foodLevel, exp, saturation, exhaustion, heldSlot, gamemode, isFly);
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
         PlayerDataEnderChest enderChest = PlayerDataEnderChest.of(player.getEnderChest());
         return new PlayerData(player.getUniqueId(), values, inventory, enderChest);

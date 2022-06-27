@@ -27,6 +27,9 @@ public class MySQLPlayerValuesDataModel {
                     "`saturation` FLOAT DEFAULT 0, "+
                     "`exhaustion` FLOAT DEFAULT 0, "+
                     "`heldSlot` INT DEFAULT 0, " +
+                    "`gamemode` INT DEFAULT 0, " +
+                    "`fly` BOOLEAN DEFAULT FALSE, " +
+                    "`healthScale` DOUBLE DEFAULT 0, " +
                     "PRIMARY KEY(`uuid`)) " +
                     "charset=utf8mb4");
             ps.execute();
@@ -35,7 +38,7 @@ public class MySQLPlayerValuesDataModel {
 
     CompletableFuture<PlayerDataValues> load(UUID uuid){
         return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("SELECT `health`, `level`, `foodLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot` FROM "+table+" WHERE `uuid`=?");
+            PreparedStatement ps = connection.prepareStatement("SELECT `health`, `level`, `foodLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot`, `gamemode`, `fly`, `healthScale` FROM "+table+" WHERE `uuid`=?");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
@@ -46,9 +49,12 @@ public class MySQLPlayerValuesDataModel {
                 float saturation = rs.getFloat(5);
                 float exhaustion = rs.getFloat(6);
                 int heldSlot = rs.getInt(7);
-                return new PlayerDataValues(health, level, foodLevel, exp, saturation, exhaustion, heldSlot);
+                int gamemode = rs.getInt(8);
+                boolean fly = rs.getBoolean(9);
+                double healthScale = rs.getDouble(10);
+                return new PlayerDataValues(health, healthScale, level, foodLevel, exp, saturation, exhaustion, heldSlot, gamemode, fly);
             }else{
-                return PlayerDataValues.getDefault();
+                return null;
             }
         });
     }
@@ -56,8 +62,8 @@ public class MySQLPlayerValuesDataModel {
     CompletableFuture<Void> save(UUID uuid, PlayerDataValues values){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" " +
-                    "(`uuid`, `health`, `level`, `foodLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot`) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "(`uuid`, `health`, `level`, `foodLevel`, `exp`, `saturation`, `exhaustion`, `heldSlot`, `gamemode`, `fly`, `healthScale`) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON DUPLICATE KEY UPDATE " +
                     "`health`=VALUES(`health`), " +
                     "`level`=VALUES(`level`), " +
@@ -65,7 +71,10 @@ public class MySQLPlayerValuesDataModel {
                     "`exp`=VALUES(`exp`), " +
                     "`saturation`=VALUES(`saturation`), " +
                     "`exhaustion`=VALUES(`exhaustion`), " +
-                    "`heldSlot`=VALUES(`heldSlot`);");
+                    "`heldSlot`=VALUES(`heldSlot`), " +
+                    "`gamemode`=VALUES(`gamemode`), " +
+                    "`fly`=VALUES(`fly`), " +
+                    "`healthScale`=VALUES(`healthScale`);" );
             ps.setString(1, uuid.toString());
             ps.setDouble(2, values.getHealth());
             ps.setInt(3, values.getLevel());
@@ -74,6 +83,9 @@ public class MySQLPlayerValuesDataModel {
             ps.setFloat(6, values.getSaturation());
             ps.setFloat(7, values.getExhaustion());
             ps.setInt(8, values.getHeldSlot());
+            ps.setInt(9, values.getGamemode());
+            ps.setBoolean(10, values.isFly());
+            ps.setDouble(11, values.getHealthScale());
             ps.execute();
             return null;
         });
