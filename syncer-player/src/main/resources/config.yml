@@ -1,5 +1,6 @@
 TravelLibrary:
-  mysql: 'default'
+  inventory: 'default'
+  log: 'log'
 logResult: true
 extendingTimeoutPeriodMills: 50000
 joinTimeoutMills: 5000

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
@@ -241,6 +242,9 @@ public class MySQLSyncStatusDatabase {
                 }else{
                     return true;
                 }
+            }catch (SQLException e){
+                connection.rollback();
+                return false;
             }finally {
                 connection.setAutoCommit(true);
             }

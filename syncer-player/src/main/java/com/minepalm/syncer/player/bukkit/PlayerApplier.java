@@ -1,5 +1,6 @@
 package com.minepalm.syncer.player.bukkit;
 
+import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.ApplyStrategy;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
@@ -21,14 +22,18 @@ public class PlayerApplier {
         orders.add(name);
     }
 
-    public void inject(Player player, PlayerData data){
+    public PlayerData inject(Player player, PlayerData data){
         PlayerData extracted = this.extract(player);
 
         try{
             apply(player, data);
+            MySQLLogger.log(PlayerDataLog.inject(data));
+            return data;
         }catch (Throwable e){
-            e.printStackTrace();
+            MySQLLogger.log(e);
+            MySQLLogger.log(PlayerDataLog.injectRollback(extracted));
             apply(player, extracted);
+            return extracted;
         }
     }
 
@@ -44,7 +49,7 @@ public class PlayerApplier {
                     logger.log(player.getName()+": try apply "+key);
                     strategy.applyPlayer(player, data);
                 } catch (Throwable e) {
-                    e.printStackTrace();
+                    MySQLLogger.log(e);
                 }
             }
         }
@@ -59,7 +64,7 @@ public class PlayerApplier {
         float exhaustion = player.getExhaustion();
         int heldSlot = player.getInventory().getHeldItemSlot();
         int gamemode = player.getGameMode().getValue();
-        boolean isFly = player.isFlying();
+        boolean isFly = gamemode == 1 || player.isFlying();
         double healthScale = player.getHealthScale();
         PlayerDataValues values = new PlayerDataValues(health, healthScale, level, foodLevel, exp, saturation, exhaustion, heldSlot, gamemode, isFly);
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());

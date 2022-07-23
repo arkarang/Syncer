@@ -12,10 +12,15 @@ public class SetFly implements ApplyStrategy {
             return;
         }
 
-        boolean isFly = data.getValues().isFly();
+        boolean isFly;
+        if(data.getValues().getGamemode() == 1){
+            isFly = true;
+        }else{
+            isFly = data.getValues().isFly();
+        }
+
         player.setAllowFlight(isFly);
         player.setFlying(isFly);
-        EntityLiving asdf;
     }
 
 }

@@ -13,7 +13,7 @@ public class PlayerDataInventory {
     private static final ItemStack AIR = new ItemStack(Material.AIR);
 
     private final ImmutableMap<Integer, ItemStack> items;
-    private final long generatedTime = System.currentTimeMillis();
+    private final long generatedTime;
 
     public long getGeneratedTime() {
         return generatedTime;
@@ -21,6 +21,12 @@ public class PlayerDataInventory {
 
     private PlayerDataInventory(Map<Integer, ItemStack> items){
         this.items = ImmutableMap.copyOf(items);
+        this.generatedTime = System.currentTimeMillis();
+    }
+
+    private PlayerDataInventory(Map<Integer, ItemStack> items, long generatedTime){
+        this.items = ImmutableMap.copyOf(items);
+        this.generatedTime = generatedTime;
     }
 
     public Map<Integer, ItemStack> getItems(){
@@ -80,8 +86,16 @@ public class PlayerDataInventory {
         return new PlayerDataInventory(items);
     }
 
+    public PlayerDataInventory copy(){
+        return new PlayerDataInventory(this.items, System.currentTimeMillis());
+    }
+
     public static PlayerDataInventory of(Map<Integer, ItemStack> map){
         return new PlayerDataInventory(map);
+    }
+
+    public static PlayerDataInventory of(Map<Integer, ItemStack> map, long generatedTime){
+        return new PlayerDataInventory(map, generatedTime);
     }
 
     public ItemStack[] toArray(){

@@ -9,3 +9,5 @@ depend:
 commands:
   psalter:
     description: 'asdfasdf'
+  pstest:
+    description: 'test'

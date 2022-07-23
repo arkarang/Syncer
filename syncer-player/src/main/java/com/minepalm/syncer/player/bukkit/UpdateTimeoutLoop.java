@@ -2,6 +2,8 @@ package com.minepalm.syncer.player.bukkit;
 
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.Syncer;
+import com.minepalm.syncer.player.MySQLLogger;
+import com.minepalm.syncer.player.PlayerTransactionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -21,7 +23,10 @@ public class UpdateTimeoutLoop {
 
     private final ExecutorService service;
     private final Syncer syncer;
+
+    private final PlayerTransactionManager manager;
     private final PlayerDataStorage storage;
+
     private final PlayerApplier applier;
     private final long periodMills;
     private final TimestampLogger logger;
@@ -62,7 +67,16 @@ public class UpdateTimeoutLoop {
                     logger.warn("extending player lock timeout "+uuid+" is failed. is player offline?");
                 }else{
                     Optional.ofNullable(Bukkit.getPlayer(uuid)).ifPresent(player->{
-                        val future2 = storage.save(uuid, applier.extract(player));
+                        val future2 = manager.commit(uuid, ()-> {
+                            try {
+                                PlayerData data = applier.extract(player);
+                                storage.save(uuid, data).get();
+                                MySQLLogger.log(PlayerDataLog.saveLog(data), "AUTO");
+                            } catch (InterruptedException | ExecutionException e) {
+                                MySQLLogger.log(e);
+                            }
+                            return null;
+                        });
                         futures.add(future2);
                         future2.thenRun(()->{
                             logger.log(player, "auto save completed");

@@ -1,6 +1,7 @@
 package com.minepalm.syncer.player.mysql;
 
 import com.minepalm.arkarangutils.compress.CompressedInventorySerializer;
+import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
@@ -42,22 +43,18 @@ public class MySQLPlayerInventoryDataModel {
 
     CompletableFuture<PlayerDataInventory> load(UUID uuid){
         return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("SELECT `data` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
+            PreparedStatement ps = connection.prepareStatement("SELECT `data`, `generated_time` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
 
             if(rs.next()){
-                try {
-                    HashMap<Integer, ItemStack> map = new HashMap<>();
-                    ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(rs.getString(1));
-                    for(int i = 0 ; i < items.length ; i++){
-                        map.put(i, items[i]);
-                    }
-
-                    return PlayerDataInventory.of(map);
-                }catch (Throwable ignored){
-
+                HashMap<Integer, ItemStack> map = new HashMap<>();
+                ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(rs.getString(1));
+                for(int i = 0 ; i < items.length ; i++){
+                    map.put(i, items[i]);
                 }
+
+                return PlayerDataInventory.of(map, rs.getLong(2));
             }
 
             return null;

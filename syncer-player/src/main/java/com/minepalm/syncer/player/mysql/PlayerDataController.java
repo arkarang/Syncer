@@ -1,9 +1,7 @@
 package com.minepalm.syncer.player.mysql;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
-import com.minepalm.syncer.player.bukkit.PlayerDataEnderChest;
-import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
-import com.minepalm.syncer.player.bukkit.PlayerDataValues;
+import com.minepalm.syncer.player.MySQLLogger;
+import com.minepalm.syncer.player.bukkit.*;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -32,7 +30,8 @@ public class PlayerDataController {
                 PlayerDataEnderChest enderChestData = enderChest.get();
                 return new PlayerData(uuid, data, inv, enderChestData);
             }catch (InterruptedException | ExecutionException e){
-                return new PlayerData(uuid, null, null, null);
+                MySQLLogger.log(e);
+                return null;
             }
         });
     }
@@ -44,7 +43,7 @@ public class PlayerDataController {
 
         inventoryFuture.thenAccept(triedDuplicated -> {
             if(triedDuplicated){
-                Bukkit.getLogger().warning("found tried duplicate saving "+data.getUuid());
+                MySQLLogger.log(PlayerDataLog.duplicateSaveLog(data));
             }
         });
 

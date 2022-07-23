@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 @RequiredArgsConstructor
@@ -31,5 +32,9 @@ public class TimestampLogger {
     public void log(Player player, String message){
         String playerFormat = player.getName()+"("+player.getUniqueId()+")";
         log("player: " + playerFormat+ " " + message);
+    }
+
+    public void log(UUID uuid, String message){
+        log("player: " + uuid.toString()+ " " + message);
     }
 }
