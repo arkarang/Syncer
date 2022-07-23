@@ -2,7 +2,6 @@ package com.minepalm.syncer.player.bukkit;
 
 import com.minepalm.syncer.player.PlayerTransactionManager;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -13,6 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 public class PlayerJoinListener implements Listener {
@@ -22,13 +22,21 @@ public class PlayerJoinListener implements Listener {
 
     private final PlayerTransactionManager manager;
 
+    private final AtomicBoolean allowed = new AtomicBoolean(false);
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void asyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) throws ExecutionException, InterruptedException {
+        if(!allowed.get()){
+            event.setKickMessage(conf.getIllegalAccessText());
+            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+            return;
+        }
 
         if(!event.isAsynchronous()){
             event.setKickMessage(conf.getIllegalAccessText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
             loader.markPass(event.getUniqueId(), "SYNCHRONOUS_JOIN");
+            return;
         }
 
         UUID uuid = event.getUniqueId();
@@ -42,6 +50,7 @@ public class PlayerJoinListener implements Listener {
             event.setKickMessage(conf.getTimeoutText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
             loader.markPass(event.getUniqueId(), "TIMEOUT");
+
         }
     }
 
@@ -65,5 +74,9 @@ public class PlayerJoinListener implements Listener {
     public void playerKick(PlayerKickEvent event) {
         loader.saveRuntime(event.getPlayer());
         //manager.unregister(event.getPlayer().getUniqueId());
+    }
+
+    public void setAllow(){
+        allowed.set(true);
     }
 }

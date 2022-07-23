@@ -48,7 +48,7 @@ public class PlayerSyncer extends JavaPlugin {
     @Getter
     PlayerLoader loader;
 
-    //TransactionLoop transactionLoop;
+    TransactionLoop transactionLoop;
 
     PlayerTransactionManager manager;
 
@@ -75,13 +75,15 @@ public class PlayerSyncer extends JavaPlugin {
         valuesDataModel.init();
 
         this.modifier = initialize(new PlayerApplier(logger));
-        //transactionLoop = new TransactionLoop(
-        //        Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50, this.getLogger());
-        //transactionLoop.start();
-        manager = new PlayerTransactionManager(Executors.newFixedThreadPool(4));
+        transactionLoop = new TransactionLoop(
+                Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50, this.getLogger());
+        transactionLoop.start();
+        manager = new PlayerTransactionManager(transactionLoop);
+        //manager = new PlayerTransactionManager(Executors.newFixedThreadPool(4));
         this.storage = new PlayerDataStorage(manager, enderChestDataModel, valuesDataModel, inventoryDataModel);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, manager, storage, modifier,
                 conf.getExtendingTimeoutPeriod(), logger);
+        this.loop.start();
 
         this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor, logger,
                 conf.getExtendingTimeoutPeriod(), conf.getTimeout(), manager);
@@ -89,7 +91,6 @@ public class PlayerSyncer extends JavaPlugin {
         conf.getStrategies().forEach(key -> this.modifier.setActivate(key, true));
 
         logger.setLog(conf.logResults());
-        this.loop.start();
 
         this.listener = new PlayerJoinListener(conf, loader, manager);
         Bukkit.getPluginManager().registerEvents(listener, this);
@@ -103,6 +104,8 @@ public class PlayerSyncer extends JavaPlugin {
 
         MySQLLogger.init(logDatabase);
         MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*3);
+
+        Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 
         //getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger())));
     }

@@ -109,7 +109,7 @@ public class PlayerLoader {
         return false;
     }
 
-    public void saveRuntime(Player player){
+    public CompletableFuture<Void> saveRuntime(Player player){
         logger.log(player, " save start");
         UUID uuid = player.getUniqueId();
 
@@ -117,8 +117,9 @@ public class PlayerLoader {
             logger.log(player, " passed ");
             MySQLLogger.log(PlayerDataLog.nullLog(uuid, "PASS"), passed.get(uuid));
             passed.remove(uuid);
+            return CompletableFuture.completedFuture(null);
         }else {
-            save(uuid, modifier.extract(player));
+            return save(uuid, modifier.extract(player));
         }
 
     }
@@ -182,9 +183,13 @@ public class PlayerLoader {
         logger.log(uuid+" preTeleport save start");
         Player player = Bukkit.getPlayer(uuid);
         if(player != null) {
-            this.saveRuntime(player);
-            this.markPass(uuid, "TELEPORT");
-            logger.log(player, "complete preTeleport request ");
+            try {
+                this.saveRuntime(player).get();
+                this.markPass(uuid, "TELEPORT");
+                logger.log(player, "complete preTeleport request ");
+            }catch (Throwable ex){
+                MySQLLogger.log(ex);
+            }
         }
     }
 

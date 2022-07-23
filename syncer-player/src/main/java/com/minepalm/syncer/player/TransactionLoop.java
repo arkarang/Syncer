@@ -8,44 +8,41 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class TransactionLoop {
     private final ExecutorService loop;
     private final ExecutorService workers;
     private final long periodMills;
-    private final Logger logger;
     AtomicBoolean run = new AtomicBoolean(false);
     private CompletableFuture<Void> mainLoopTask;
     private final List<CompletableFuture<Void>> runningTasks = new ArrayList<>();
 
     ConcurrentHashMap<UUID, PlayerTransaction> transactions = new ConcurrentHashMap<>();
 
-    public TransactionLoop(ExecutorService loop, ExecutorService workers, long periodMills, Logger logger){
+    public TransactionLoop(ExecutorService loop, ExecutorService workers, long periodMills){
         this.loop = loop;
         this.workers = workers;
         this.periodMills = periodMills;
-        this.logger = logger;
     }
 
     public synchronized void start(){
         this.run.set(true);
         mainLoopTask = CompletableFuture.runAsync(()->{
             while (run.get()){
+                runningTasks.clear();
                 long begin = System.currentTimeMillis();
 
                 List<PlayerTransaction> list = new ArrayList<>(this.transactions.values());
 
-                for (PlayerTransaction controller : list) {
-                    runningTasks.add(CompletableFuture.runAsync(controller::runIfHasNext, workers));
+                for (PlayerTransaction transaction : list) {
+                    runningTasks.add(CompletableFuture.runAsync(transaction::runIfHasNext, workers));
                 }
 
                 try {
                     CompletableFuture.allOf(runningTasks.toArray(new CompletableFuture<?>[0])).get();
                 }catch (Throwable e){
-                    logger.severe("error occurred: "+e.getClass().getSimpleName()+": "+e.getMessage());
-                    for (StackTraceElement el : e.getStackTrace()) {
-                        logger.severe(el.toString());
-                    }
+                    MySQLLogger.log(e);
                 }
                 long estimatedTime = System.currentTimeMillis() - begin;
                 if(estimatedTime < periodMills){
@@ -60,9 +57,10 @@ public class TransactionLoop {
     }
 
     public synchronized CompletableFuture<Void> stop(){
-        this.run.set(false);
-        this.workers.shutdown();
-        this.loop.shutdown();
+        run.set(false);
+        transactions.values().stream().map(PlayerTransaction::shutdown).collect(Collectors.toList());
+        workers.shutdown();
+        loop.shutdown();
         return mainLoopTask;
     }
 

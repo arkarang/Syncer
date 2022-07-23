@@ -6,14 +6,11 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 public class PlayerTransactionManager {
 
-    /*
     private final TransactionLoop loop;
 
     public CompletableFuture<Void> commit(UUID uuid, Runnable run){
@@ -29,16 +26,23 @@ public class PlayerTransactionManager {
 
     public synchronized void register(UUID uuid){
         if(!loop.transactions.containsKey(uuid)){
-            loop.register(uuid, new PlayerTransaction(uuid, loop));
+            loop.register(uuid, new PlayerTransaction(uuid));
         }
     }
 
     public synchronized void unregister(UUID uuid){
+        if(loop.transactions.containsKey(uuid)){
+            loop.transactions.get(uuid).shutdown();
+        }
         loop.unregister(uuid);
     }
 
-     */
+    public synchronized void shutdown(){
+        loop.stop();
+    }
 
+
+    /*
     private final ExecutorService executor;
     private final Cache<UUID, CompletableFuture<?>> cache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)
@@ -63,5 +67,7 @@ public class PlayerTransactionManager {
         cache.put(uuid, afterFuture);
         return afterFuture;
     }
+
+     */
 
 }

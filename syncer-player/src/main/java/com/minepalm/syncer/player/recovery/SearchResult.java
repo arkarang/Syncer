@@ -18,15 +18,15 @@ public class SearchResult {
     }
 
     public List<Long> sortDescendingTaskTime(){
-
+        return null;
     }
 
     public List<Long> sortAscendingTaskTime(){
-
+        return null;
     }
 
     public SimplePlayerLog get(long taskId){
-
+        return null;
     }
 
     public int size(){

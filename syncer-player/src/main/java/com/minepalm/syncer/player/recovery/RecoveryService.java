@@ -10,11 +10,11 @@ public class RecoveryService {
 
 
     public CompletableFuture<Void> rollback(UUID uuid, PlayerDataLog log){
-
+        return null;
     }
 
     public CompletableFuture<SearchResult> search(UUID uuid){
-
+        return null;
     }
 
 
