@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 @RequiredArgsConstructor
@@ -37,8 +38,8 @@ public class PlayerTransactionManager {
         loop.unregister(uuid);
     }
 
-    public synchronized void shutdown(){
-        loop.stop();
+    public synchronized void shutdown() throws ExecutionException, InterruptedException {
+        loop.stop().get();
     }
 
 

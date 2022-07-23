@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -57,11 +58,20 @@ public class TransactionLoop {
     }
 
     public synchronized CompletableFuture<Void> stop(){
-        run.set(false);
-        transactions.values().stream().map(PlayerTransaction::shutdown).collect(Collectors.toList());
-        workers.shutdown();
-        loop.shutdown();
-        return mainLoopTask;
+        return CompletableFuture.runAsync(()->{
+            run.set(false);
+            try {
+                CompletableFuture.allOf(
+                        transactions.values().stream()
+                                .map(PlayerTransaction::shutdown)
+                                .toArray(CompletableFuture[]::new)
+                ).get();
+            }catch (Throwable e){
+                MySQLLogger.log(e);
+            }
+            workers.shutdown();
+            loop.shutdown();
+        }, Executors.newSingleThreadExecutor());
     }
 
     public synchronized void register(UUID uuid, PlayerTransaction controller){

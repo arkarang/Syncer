@@ -26,7 +26,7 @@ public class PlayerTransaction {
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 
-    protected synchronized CompletableFuture<Void> addTask(Runnable run){
+    public synchronized CompletableFuture<Void> addTask(Runnable run){
         CompletableFuture<Void> callee = new CompletableFuture<>();
         futures.add(callee);
         queue.add(()->{
@@ -42,7 +42,7 @@ public class PlayerTransaction {
         return callee;
     }
 
-    protected synchronized <T> CompletableFuture<T> addTask(Supplier<T> run){
+    public synchronized <T> CompletableFuture<T> addTask(Supplier<T> run){
         CompletableFuture<T> callee = new CompletableFuture<>();
         futures.add(callee);
         queue.add(()->{
@@ -57,7 +57,7 @@ public class PlayerTransaction {
         return callee;
     }
 
-    protected synchronized void runIfHasNext(){
+    public synchronized void runIfHasNext(){
         while (!queue.isEmpty()) {
             queue.poll().run();
         }
