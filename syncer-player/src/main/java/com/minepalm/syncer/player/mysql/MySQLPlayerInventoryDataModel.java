@@ -1,11 +1,9 @@
 package com.minepalm.syncer.player.mysql;
 
 import com.minepalm.arkarangutils.compress.CompressedInventorySerializer;
-import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.PreparedStatement;
@@ -41,7 +39,7 @@ public class MySQLPlayerInventoryDataModel {
         });
     }
 
-    CompletableFuture<PlayerDataInventory> load(UUID uuid){
+    public CompletableFuture<PlayerDataInventory> load(UUID uuid){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("SELECT `data`, `generated_time` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
             ps.setString(1, uuid.toString());
@@ -62,11 +60,11 @@ public class MySQLPlayerInventoryDataModel {
         });
     }
 
-    CompletableFuture<Boolean> save(UUID uuid, PlayerDataInventory inventory){
+    public CompletableFuture<Boolean> save(UUID uuid, PlayerDataInventory inventory){
         return database.executeAsync(connection -> {
             try {
                 connection.setAutoCommit(false);
-                PreparedStatement select = connection.prepareStatement("SELECT `generated_time` FROM " + table + " WHERE `uuid`=?");
+                PreparedStatement select = connection.prepareStatement("SELECT `generated_time` FROM " + table + " WHERE `uuid`=? FOR UPDATE");
                 select.setString(1, uuid.toString());
                 ResultSet rs = select.executeQuery();
                 long generatedTime = 0;

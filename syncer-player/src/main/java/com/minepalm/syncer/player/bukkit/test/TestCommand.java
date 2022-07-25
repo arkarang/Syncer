@@ -10,6 +10,7 @@ import org.bukkit.command.CommandSender;
 public class TestCommand implements CommandExecutor {
 
     private final LoopTest test;
+    private final DuplicateFinder finder;
 
     @Override
     @SneakyThrows
@@ -18,10 +19,14 @@ public class TestCommand implements CommandExecutor {
             if(strings.length >= 1){
                 switch (strings[0]){
                     case "test1":
-                        test.test1();
+                        test.test1(Integer.parseInt(strings[1]));
                         return true;
-                    case "test2":
-                        test.test2();
+
+                    case "dupecheck":
+                        finder.execute();
+                        return true;
+                    case "dupecheck2":
+                        finder.execute2();
                         return true;
                 }
             }

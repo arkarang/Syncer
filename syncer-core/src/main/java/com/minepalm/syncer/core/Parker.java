@@ -1,9 +1,5 @@
 package com.minepalm.syncer.core;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

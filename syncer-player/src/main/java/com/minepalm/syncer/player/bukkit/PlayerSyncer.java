@@ -1,19 +1,19 @@
 package com.minepalm.syncer.player.bukkit;
 
+import co.aikar.commands.BukkitCommandManager;
+import com.minepalm.arkarangutils.bukkit.ArkarangGUIListener;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.bungeejump.impl.BungeeJump;
 import com.minepalm.bungeejump.impl.bukkit.BungeeJumpBukkit;
 import com.minepalm.syncer.bootstrap.SyncerBukkit;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
-import com.minepalm.syncer.player.PlayerTransactionManager;
-import com.minepalm.syncer.player.TransactionLoop;
+import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.bukkit.strategies.*;
+import com.minepalm.syncer.player.bukkit.test.DuplicateFinder;
 import com.minepalm.syncer.player.bukkit.test.LoopTest;
 import com.minepalm.syncer.player.bukkit.test.TestCommand;
-import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
-import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
-import com.minepalm.syncer.player.mysql.MySQLPlayerValuesDataModel;
+import com.minepalm.syncer.player.mysql.*;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import kr.travelrpg.travellibrary.bukkit.TravelLibraryBukkit;
 import lombok.Getter;
@@ -22,7 +22,6 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -48,9 +47,9 @@ public class PlayerSyncer extends JavaPlugin {
     @Getter
     PlayerLoader loader;
 
-    TransactionLoop transactionLoop;
+    //TransactionLoop transactionLoop;
 
-    PlayerTransactionManager manager;
+    //PlayerTransactionManager manager;
 
     @Override
     public void onEnable() {
@@ -75,24 +74,25 @@ public class PlayerSyncer extends JavaPlugin {
         valuesDataModel.init();
 
         this.modifier = initialize(new PlayerApplier(logger));
-        transactionLoop = new TransactionLoop(
-                Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50, this.getLogger());
-        transactionLoop.start();
-        manager = new PlayerTransactionManager(transactionLoop);
-        //manager = new PlayerTransactionManager(Executors.newFixedThreadPool(4));
-        this.storage = new PlayerDataStorage(manager, enderChestDataModel, valuesDataModel, inventoryDataModel);
-        this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, manager, storage, modifier,
+        //transactionLoop = new TransactionLoop(
+        //        Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50);
+        //transactionLoop.start();
+        //manager = new PlayerTransactionManager(transactionLoop);
+        //manager = new PlayerTransactionManager(Executors.newSingleThreadExecutor(), Executors.newCachedThreadPool(), 50L);
+        //manager.start();
+        this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel);
+        this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
                 conf.getExtendingTimeoutPeriod(), logger);
         this.loop.start();
 
         this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor, logger,
-                conf.getExtendingTimeoutPeriod(), conf.getTimeout(), manager);
+                conf.getExtendingTimeoutPeriod(), conf.getTimeout());
 
         conf.getStrategies().forEach(key -> this.modifier.setActivate(key, true));
 
         logger.setLog(conf.logResults());
 
-        this.listener = new PlayerJoinListener(conf, loader, manager);
+        this.listener = new PlayerJoinListener(conf, loader, modifier, bukkitExecutor);
         Bukkit.getPluginManager().registerEvents(listener, this);
 
         syncer.register(PlayerHolder.class, PlayerHolder::toString);
@@ -102,12 +102,19 @@ public class PlayerSyncer extends JavaPlugin {
             this.loader.preTeleportSave(uuid);
         });
 
-        MySQLLogger.init(logDatabase);
+        MySQLPlayerLogDatabase playerLogDatabase = new MySQLPlayerLogDatabase("playersyncer_logs", logDatabase);
+        MySQLExceptionLogDatabase exceptionLogDatabase = new MySQLExceptionLogDatabase("playersyncer_excepitons", logDatabase);
+        MySQLLogger.init(playerLogDatabase, exceptionLogDatabase);
+
         MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*3);
 
         Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 
-        //getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger())));
+        getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger()), new DuplicateFinder(this.getLogger(), logDatabase)));
+        BukkitCommandManager commandManager = new BukkitCommandManager(this);
+        commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase, inventoryDataModel,
+                new PlayerDataGUIFactory(inventoryDataModel)));
+        ArkarangGUIListener.init();
     }
 
     @Override
@@ -135,9 +142,7 @@ public class PlayerSyncer extends JavaPlugin {
             }, ex);
             futures.add(future);
         }
-
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(20000L, TimeUnit.MILLISECONDS);
-        //transactionLoop.stop().get(5000L, TimeUnit.MILLISECONDS);
 
     }
 

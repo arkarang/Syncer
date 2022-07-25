@@ -5,8 +5,6 @@ import com.minepalm.syncer.api.SyncPubSub;
 import com.minepalm.syncer.core.hellobungee.entity.SyncSubscription;
 import lombok.RequiredArgsConstructor;
 
-import java.util.logging.LogManager;
-
 @RequiredArgsConstructor
 public class SyncSubscriptionCallback implements CallbackTransformer<SyncSubscription.SyncSubRequest, SyncSubscription.SyncSubResult> {
 

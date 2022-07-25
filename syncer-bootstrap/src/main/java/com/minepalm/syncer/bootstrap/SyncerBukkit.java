@@ -6,7 +6,6 @@ import com.minepalm.hellobungee.bukkit.HelloBukkit;
 import com.minepalm.syncer.core.Syncer;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import kr.travelrpg.travellibrary.bukkit.TravelLibraryBukkit;
-import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SyncerBukkit extends JavaPlugin {

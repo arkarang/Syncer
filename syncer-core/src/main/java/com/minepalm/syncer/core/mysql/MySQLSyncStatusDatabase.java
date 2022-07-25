@@ -1,6 +1,5 @@
 package com.minepalm.syncer.core.mysql;
 
-import com.minepalm.syncer.core.DebugLogger;
 import com.minepalm.syncer.core.HoldData;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class MySQLSyncStatusDatabase {

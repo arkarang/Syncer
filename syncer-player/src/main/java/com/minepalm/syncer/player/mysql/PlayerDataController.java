@@ -4,7 +4,6 @@ import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.*;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.bukkit.Bukkit;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;

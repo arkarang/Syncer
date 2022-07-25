@@ -1,7 +1,6 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
 import com.minepalm.syncer.player.bukkit.PlayerData;
-import net.minecraft.server.v1_12_R1.EntityLiving;
 import org.bukkit.entity.Player;
 
 public class SetFly implements ApplyStrategy {

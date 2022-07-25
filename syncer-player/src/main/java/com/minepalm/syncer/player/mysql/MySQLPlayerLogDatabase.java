@@ -5,6 +5,10 @@ import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 // row_id / uuid / executed_time / task_id / data_id(generated_time) / description / data
@@ -51,6 +55,76 @@ public class MySQLPlayerLogDatabase {
 
     public CompletableFuture<Void> log(PlayerDataLog log){
         return log(log, "");
+    }
+
+    public CompletableFuture<List<PlayerDataLog>> select(UUID uuid, long range){
+        return database.executeAsync(connection -> {
+            PreparedStatement ps = connection.prepareStatement("SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
+                    "`description` FROM "+table+" WHERE `uuid`=? AND `time` > ? ORDER BY `time`");
+            ps.setString(1, uuid.toString());
+            ps.setLong(2, range);
+            ResultSet rs = ps.executeQuery();
+            List<PlayerDataLog> list = new ArrayList<>();
+            while (rs.next()){
+                long time = rs.getLong(1);
+                String taskId = rs.getString(2);
+                String invData = rs.getString(3);
+                String enderchestData = rs.getString(4);
+                long dataTime = rs.getLong(5);
+                String desc = rs.getString(6);
+                PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
+                list.add(log);
+            }
+            return list;
+        });
+    }
+
+    public CompletableFuture<List<PlayerDataLog>> select(UUID uuid, long range, long rangeMax){
+        return database.executeAsync(connection -> {
+            PreparedStatement ps = connection.prepareStatement("SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
+                    "`description` FROM "+table+" WHERE `uuid`=? AND `time` > ? AND `time` <= ? ORDER BY `time`");
+            ps.setString(1, uuid.toString());
+            ps.setLong(2, range);
+            ps.setLong(3, rangeMax);
+            ResultSet rs = ps.executeQuery();
+            List<PlayerDataLog> list = new ArrayList<>();
+            while (rs.next()){
+                long time = rs.getLong(1);
+                String taskId = rs.getString(2);
+                String invData = rs.getString(3);
+                String enderchestData = rs.getString(4);
+                long dataTime = rs.getLong(5);
+                String desc = rs.getString(6);
+                PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
+                list.add(log);
+            }
+            return list;
+        });
+    }
+
+    public CompletableFuture<List<PlayerDataLog>> selectType(UUID uuid, String type, long range, long rangeMax){
+        return database.executeAsync(connection -> {
+            PreparedStatement ps = connection.prepareStatement("" +
+                    "SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
+                    "`description` FROM "+table+" WHERE `uuid`=? AND `time` > ? AND `time` <= ? AND `type`=? ORDER BY `time`");
+            ps.setString(1, uuid.toString());
+            ps.setLong(2, range);
+            ps.setLong(3, rangeMax);
+            ps.setString(4, type);
+            ResultSet rs = ps.executeQuery();
+            List<PlayerDataLog> list = new ArrayList<>();
+            while (rs.next()){
+                long time = rs.getLong(1);
+                String taskId = rs.getString(2);
+                String invData = rs.getString(3);
+                String enderchestData = rs.getString(4);
+                long dataTime = rs.getLong(5);
+                String desc = rs.getString(6);
+                PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
+                list.add(log);
+            }
+            return list;
+        });
     }
 
     public CompletableFuture<Void> purge(long baseTime){

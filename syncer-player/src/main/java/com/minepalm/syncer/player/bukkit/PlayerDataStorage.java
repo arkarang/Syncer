@@ -1,6 +1,5 @@
 package com.minepalm.syncer.player.bukkit;
 
-import com.minepalm.syncer.player.PlayerTransactionManager;
 import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerValuesDataModel;
@@ -10,15 +9,10 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Getter
 @RequiredArgsConstructor
 public class PlayerDataStorage {
-
-    private final PlayerTransactionManager manager;
 
     private final MySQLPlayerEnderChestDataModel enderChestDataModel;
     private final MySQLPlayerValuesDataModel valuesDataModel;

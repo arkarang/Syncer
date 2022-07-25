@@ -1,6 +1,5 @@
 package com.minepalm.syncer.player.recovery;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
 
 import java.util.UUID;

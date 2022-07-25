@@ -3,7 +3,6 @@ package com.minepalm.syncer.player;
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
 import com.minepalm.syncer.player.mysql.MySQLExceptionLogDatabase;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
@@ -15,14 +14,14 @@ public class MySQLLogger {
     private static MySQLPlayerLogDatabase playerLogDatabase;
     private static final Lock lock = new ReentrantLock();
 
-    public static void init(MySQLDatabase mysql){
+    public static void init(MySQLPlayerLogDatabase logdb, MySQLExceptionLogDatabase exdb){
         synchronized (lock){
             if(exceptionLogDatabase == null){
-                exceptionLogDatabase = new MySQLExceptionLogDatabase("playersyncer_excepitons", mysql);
+                exceptionLogDatabase = exdb;
                 exceptionLogDatabase.init();
             }
             if(playerLogDatabase == null){
-                playerLogDatabase = new MySQLPlayerLogDatabase("playersyncer_logs", mysql);
+                playerLogDatabase = logdb;
                 playerLogDatabase.init();
             }
         }
@@ -45,7 +44,6 @@ public class MySQLLogger {
     }
 
     public static void log(Throwable ex){
-        ex.printStackTrace();
         if(exceptionLogDatabase != null){
             exceptionLogDatabase.log(ex, System.currentTimeMillis());
         }

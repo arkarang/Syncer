@@ -5,8 +5,6 @@ import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.core.hellobungee.entity.SyncReleasedLock;
 import lombok.RequiredArgsConstructor;
 
-import java.util.logging.LogManager;
-
 @RequiredArgsConstructor
 public class SyncReleaseLockExecutor implements HelloExecutor<SyncReleasedLock> {
 

@@ -27,11 +27,9 @@ public class PlayerApplier {
 
         try{
             apply(player, data);
-            MySQLLogger.log(PlayerDataLog.inject(data));
             return data;
         }catch (Throwable e){
             MySQLLogger.log(e);
-            MySQLLogger.log(PlayerDataLog.injectRollback(extracted));
             apply(player, extracted);
             return extracted;
         }

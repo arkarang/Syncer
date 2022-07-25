@@ -3,19 +3,16 @@ package com.minepalm.syncer.player.bukkit;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
-import com.minepalm.syncer.player.PlayerTransactionManager;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
@@ -24,7 +21,6 @@ public class UpdateTimeoutLoop {
     private final ExecutorService service;
     private final Syncer syncer;
 
-    private final PlayerTransactionManager manager;
     private final PlayerDataStorage storage;
 
     private final PlayerApplier applier;
@@ -52,22 +48,27 @@ public class UpdateTimeoutLoop {
         run.set(false);
     }
 
+    private volatile int loopCount = 0;
+
     synchronized long loop() throws ExecutionException, InterruptedException {
         long now = System.currentTimeMillis();
+        loopCount++;
         List<UUID> list = new ArrayList<>();
         List<CompletableFuture<?>> futures = new ArrayList<>();
+        List<CompletableFuture<?>> saveFutures = new ArrayList<>();
         Bukkit.getOnlinePlayers().stream().map(Entity::getUniqueId).forEach(list::add);
 
         for (UUID uuid : list) {
             PlayerHolder holder = new PlayerHolder(uuid);
             Synced<PlayerHolder> synced = syncer.of(holder);
             val future = synced.updateTimeout(periodMills);
-            future.thenAccept(completed -> {
-                if(!completed){
-                    logger.warn("extending player lock timeout "+uuid+" is failed. is player offline?");
-                }else{
-                    Optional.ofNullable(Bukkit.getPlayer(uuid)).ifPresent(player->{
-                        val future2 = manager.commit(uuid, ()-> {
+            if(loopCount > 10) {
+                val future2 = future.thenAccept(completed -> {
+                    if (!completed) {
+                        logger.warn("extending player lock timeout " + uuid + " is failed. is player offline?");
+                    } else {
+                        Player player = Bukkit.getPlayer(uuid);
+                        if (player != null) {
                             try {
                                 PlayerData data = applier.extract(player);
                                 storage.save(uuid, data).get();
@@ -75,19 +76,23 @@ public class UpdateTimeoutLoop {
                             } catch (InterruptedException | ExecutionException e) {
                                 MySQLLogger.log(e);
                             }
-                            return null;
-                        });
-                        futures.add(future2);
-                        future2.thenRun(()->{
-                            logger.log(player, "auto save completed");
-                        });
-                    });
-                    futures.add(future);
-                }
-            });
+                        }
+
+                    }
+                });
+                futures.add(future2);
+            }
         }
 
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get();
+        if(loopCount > 10){
+            loopCount = 0;
+        }
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get(10000L, TimeUnit.MILLISECONDS);
+            CompletableFuture.allOf(saveFutures.toArray(new CompletableFuture<?>[0])).get(10000L, TimeUnit.MILLISECONDS);
+        }catch (TimeoutException e){
+            Bukkit.getLogger().warning("auto save loop timeout");
+        }
 
         return System.currentTimeMillis() - now;
     }

@@ -49,6 +49,16 @@ public class PlayerDataLog {
         return toLog(data, taskName);
     }
 
+    public static PlayerDataLog joinLog(PlayerData data){
+        String taskName = "JOIN";
+        return toLog(data, taskName);
+    }
+
+    public static PlayerDataLog quitLog(PlayerData data){
+        String taskName = "QUIT";
+        return toLog(data, taskName);
+    }
+
     public static PlayerDataLog applyNull(UUID uuid){
         return nullLog(uuid, "APPLY_NULL");
     }
