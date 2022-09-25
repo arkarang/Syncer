@@ -37,7 +37,7 @@ public class MySQLPlayerLogDatabase {
     }
 
     public CompletableFuture<Void> log(PlayerDataLog log, String description){
-        return database.execute(connection -> {
+        return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" " +
                     "(`uuid`, `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, `description`) " +
                     "VALUES(?, ?, ?, ?, ?, ?, ?) ");

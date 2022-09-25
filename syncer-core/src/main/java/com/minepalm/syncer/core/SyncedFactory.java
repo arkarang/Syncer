@@ -28,7 +28,7 @@ public class SyncedFactory {
         }
 
         Parker parker = parkers.get(objectId);
-        MySQLSyncedController controller = new MySQLSyncedController(objectId, database);
+        MySQLSyncedController controller = new MySQLSyncedController(objectId, holderRegistry.getLocalName(), database);
         return new DistributedSynced<>(t, token, parker, controller, holderRegistry, pubSub);
     }
 

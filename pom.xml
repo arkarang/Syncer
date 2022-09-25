@@ -30,4 +30,12 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>minepalm-snapshots</id>
+            <url>https://nexus.minepalm.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+
 </project>

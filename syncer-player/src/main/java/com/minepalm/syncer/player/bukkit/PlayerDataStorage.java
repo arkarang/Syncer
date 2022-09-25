@@ -29,8 +29,5 @@ public class PlayerDataStorage {
     public CompletableFuture<Void> save(UUID uuid, PlayerData data){
         return getController(uuid).save(data);
     }
-    public CompletableFuture<Void> save(UUID uuid, PlayerData data, long afterMills){
-        return getController(uuid).save(data, afterMills);
 
-    }
 }

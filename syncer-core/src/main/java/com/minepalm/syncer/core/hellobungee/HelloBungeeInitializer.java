@@ -8,10 +8,13 @@ import com.minepalm.syncer.core.hellobungee.entity.SyncSubscription;
 import com.minepalm.syncer.core.hellobungee.executors.SyncReleaseLockExecutor;
 import com.minepalm.syncer.core.hellobungee.executors.SyncSubscriptionCallback;
 
+import java.util.concurrent.Executors;
+
 public class HelloBungeeInitializer {
 
     public static void initialize(SyncService service, HelloEveryone networkModule){
-        networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(new HelloBungeeSyncHolder(service.getHolderRegistry(), sender)));
+        networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(
+                new HelloBungeeSyncHolder(Executors.newCachedThreadPool(), service.getHolderRegistry(), sender)));
         networkModule.getCallbackService().registerTransformer(new SyncSubscriptionCallback(service.getPubSub()));
         networkModule.getHandler().registerExecutor(new SyncReleaseLockExecutor((Syncer)service));
         networkModule.getGateway().registerAdapter(new SyncReleasedLock.Adapter());

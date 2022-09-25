@@ -9,10 +9,12 @@ import com.minepalm.syncer.core.hellobungee.entity.SyncSubscription;
 import lombok.RequiredArgsConstructor;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 @RequiredArgsConstructor
 public class HelloBungeeSyncHolder implements SyncHolder {
 
+    private final ExecutorService executor;
     private final SyncHolderRegistry registry;
     private final HelloSender sender;
 
@@ -25,7 +27,7 @@ public class HelloBungeeSyncHolder implements SyncHolder {
     public CompletableFuture<Boolean> sendSubscribeWaiting(Synced<?> synced) {
         return sender.callback(new SyncSubscription.SyncSubRequest(registry.getLocalName(), synced.getObjectKey()), SyncSubscription.SyncSubResult.class)
                 .async()
-                .thenApply(SyncSubscription.SyncSubResult::isAccepted);
+                .thenApplyAsync(SyncSubscription.SyncSubResult::isAccepted, executor);
     }
 
     public CompletableFuture<Boolean> sendTransferHolding(Synced<?> synced) {

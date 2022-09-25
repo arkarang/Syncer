@@ -39,7 +39,7 @@ public class Syncer implements SyncService {
 
     @Override
     @SuppressWarnings("unchecked")
-    public synchronized <T> Synced<T> of(T t) {
+    public <T> Synced<T> of(T t) {
         SyncToken<T> token = (SyncToken<T>)getToken(t.getClass());
 
         if(token == null){

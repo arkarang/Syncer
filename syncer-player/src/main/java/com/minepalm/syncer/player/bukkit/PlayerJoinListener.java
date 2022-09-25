@@ -2,6 +2,7 @@ package com.minepalm.syncer.player.bukkit;
 
 import com.destroystokyo.paper.event.player.PlayerInitialSpawnEvent;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
+import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -27,6 +28,8 @@ public class PlayerJoinListener implements Listener {
     private final PlayerApplier applier;
     private final BukkitExecutor executor;
 
+    private final UpdateTimeoutLoop loop;
+
     private final AtomicBoolean allowed = new AtomicBoolean(false);
     private final Map<UUID, Boolean> eventPassed = new ConcurrentHashMap<>();
 
@@ -40,12 +43,10 @@ public class PlayerJoinListener implements Listener {
         }
 
         eventPassed.remove(event.getUniqueId());
-        Bukkit.getLogger().warning(event.getUniqueId()+" fired AsyncPlayerPreLoginEvent");
 
         if(!event.isAsynchronous()){
             event.setKickMessage(conf.getIllegalAccessText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
-            loader.markPass(event.getUniqueId(), "SYNCHRONOUS_JOIN");
             return;
         }
 
@@ -59,44 +60,41 @@ public class PlayerJoinListener implements Listener {
         }else if(completed.equals(LoadResult.TIMEOUT)){
             event.setKickMessage(conf.getTimeoutText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
-            loader.markPass(event.getUniqueId(), "TIMEOUT");
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void playerJoinEvent(PlayerJoinEvent event){
-        Bukkit.getLogger().warning("player "+event.getPlayer().getName()+" fired PlayerJoinEvent");
-
-        if(!eventPassed.containsKey(event.getPlayer().getUniqueId())){
-            event.getPlayer().kickPlayer(conf.getIllegalAccessText());
-            return;
-        }
 
         boolean completed = loader.apply(event.getPlayer());
+        loop.join(event.getPlayer().getUniqueId());
 
         if (!completed) {
-            loader.markPass(event.getPlayer().getUniqueId(), "ILLEGAL_ACCESS");
             event.getPlayer().kickPlayer(conf.getIllegalAccessText());
         }
-        eventPassed.remove(event.getPlayer().getUniqueId());
+
         executor.async(()->{
             MySQLLogger.log(PlayerDataLog.joinLog(applier.extract(event.getPlayer())));
         });
     }
     @EventHandler
     public void playerQuit(PlayerQuitEvent event) {
-        loader.saveRuntime(event.getPlayer(), "QUIT");
-        //manager.unregister(event.getPlayer().getUniqueId());
-        executor.async(()->{
-            MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));
-        });
+            loader.saveRuntime(event.getPlayer(), "QUIT");
+            loop.quit(event.getPlayer().getUniqueId());
+            executor.async(()->{
+                MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));
+            });
+
     }
 
 
     @EventHandler
     public void playerKick(PlayerKickEvent event) {
         loader.saveRuntime(event.getPlayer(), "KICK");
-        //manager.unregister(event.getPlayer().getUniqueId());
+        loop.quit(event.getPlayer().getUniqueId());
+        executor.async(()->{
+            MySQLLogger.log(PlayerDataLog.kickLog(applier.extract(event.getPlayer())));
+        });
     }
 
     public void setAllow(){

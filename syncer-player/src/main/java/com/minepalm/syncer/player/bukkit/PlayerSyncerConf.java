@@ -29,6 +29,10 @@ public class PlayerSyncerConf extends SimpleConfig {
         return config.getLong("extendingTimeoutPeriodMills");
     }
 
+    public long getSavePeriod(){
+        return config.getLong("savePeriodMills", 5000L*12*10);
+    }
+
     public String getMySQLName(){
         return config.getString("TravelLibrary.inventory");
     }

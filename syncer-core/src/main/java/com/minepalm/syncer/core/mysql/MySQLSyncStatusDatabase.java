@@ -98,8 +98,8 @@ public class MySQLSyncStatusDatabase {
                     " "+
                     "START TRANSACTION; "+
                     " "+
-                    "SELECT timeout INTO m_timeout FROM syncer_status WHERE objectId=m_objectId; "+
-                    "SELECT server INTO m_serverName FROM syncer_status WHERE objectId=m_objectId; "+
+                    "SELECT timeout INTO m_timeout FROM syncer_status WHERE objectId=m_objectId FOR UPDATE; "+
+                    "SELECT server INTO m_serverName FROM syncer_status WHERE objectId=m_objectId FOR UPDATE; "+
                     " "+
                     "SET m_serverName = IF(ISNULL(m_serverName), m_serverIn, m_serverName); "+
                     "SET m_timeout = IF(ISNULL(m_timeout), 0, m_timeout); "+

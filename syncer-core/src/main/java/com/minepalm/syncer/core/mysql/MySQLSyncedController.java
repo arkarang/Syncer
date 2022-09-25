@@ -10,14 +10,15 @@ import java.util.concurrent.ExecutionException;
 public class MySQLSyncedController {
 
     private final String objectId;
+    private final String currentServer;
     protected final MySQLSyncStatusDatabase database;
 
     public CompletableFuture<String> getHoldServer() {
         return database.getHoldingServer(objectId);
     }
 
-    public CompletableFuture<Boolean> isHold(String holderName) {
-        return database.isHeldServer(holderName, objectId);
+    public CompletableFuture<Boolean> isHold() {
+        return database.isHeldServer(currentServer, objectId);
     }
 
     public CompletableFuture<Boolean> tryHoldAsync(HoldData data, long timeout){

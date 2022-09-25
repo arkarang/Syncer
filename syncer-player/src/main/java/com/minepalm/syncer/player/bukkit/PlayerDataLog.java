@@ -59,6 +59,11 @@ public class PlayerDataLog {
         return toLog(data, taskName);
     }
 
+    public static PlayerDataLog kickLog(PlayerData data){
+        String taskName = "KICK";
+        return toLog(data, taskName);
+    }
+
     public static PlayerDataLog applyNull(UUID uuid){
         return nullLog(uuid, "APPLY_NULL");
     }

@@ -6,9 +6,12 @@ import com.minepalm.hellobungee.bungee.HelloBungee;
 import com.minepalm.syncer.core.Syncer;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import kr.travelrpg.travellibrary.bungee.TravelLibraryBungee;
+import net.md_5.bungee.api.event.ServerDisconnectEvent;
+import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.event.EventHandler;
 
-public class SyncerBungee extends Plugin {
+public class SyncerBungee extends Plugin implements Listener {
 
     static Syncer syncer;
 
@@ -31,6 +34,12 @@ public class SyncerBungee extends Plugin {
 
     @Override
     public void onDisable(){
+
+    }
+
+    @EventHandler
+    public void onPlayerDisconnected(ServerDisconnectEvent event){
+        syncer.getHolderRegistry().getHolder(event.getPlayer().getUniqueId().toString());
 
     }
 

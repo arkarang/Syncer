@@ -23,11 +23,11 @@ import java.util.logging.Logger;
 public class SyncTest {
 
     @Test
-    @Ignore
     public void test() throws InterruptedException, ExecutionException, TimeoutException {
         MySQLDatabase database = new MySQLDatabase(Executors.newFixedThreadPool(4));
         DatabaseConfig config = MSLDatabases.HIKARI.copy();
 
+        config.setManually("useSSL", "false");
         config.setAddress("localhost");
         config.setPort(3306);
         config.setDatabase("test");
@@ -71,16 +71,17 @@ public class SyncTest {
         long baseTime = System.currentTimeMillis();
         BaseTimer timer = new BaseTimer(baseTime);
 
-        val taskA = runTest(executorA, syncedA, timer,1, 1000, "syncedA");
-        val taskB = runTest(executorB, syncedB, timer,500, 1000, "syncedB");
+        val taskA = runTest(executorA, syncedA, timer, 1, 1000, "syncedA");
+        val taskB = runTest(executorB, syncedB, timer, 500, 1000, "syncedB");
 
         try {
             CompletableFuture.allOf(taskA, taskB).get(5000L, TimeUnit.MILLISECONDS);
-        }catch (TimeoutException e){
+        } catch (TimeoutException e) {
             Assert.fail("task timeout");
         }
 
         Assert.assertTrue(timer.record() >= 2000);
+
 
     }
 
@@ -90,6 +91,8 @@ public class SyncTest {
                 DebugLogger.log(label+" objectId: "+synced.getObjectKey());
                 Thread.sleep(runAfter);
                 DebugLogger.log(label+" start: "+timer.record());
+                synced.hold(Duration.ofMillis(5000L));
+                DebugLogger.log(label+" acquired hold: "+timer.record());
                 synced.hold(Duration.ofMillis(5000L));
                 DebugLogger.log(label+" acquired hold: "+timer.record());
                 Thread.sleep(holdTime);

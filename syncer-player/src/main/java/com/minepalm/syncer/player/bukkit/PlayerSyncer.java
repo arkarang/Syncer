@@ -82,7 +82,7 @@ public class PlayerSyncer extends JavaPlugin {
         //manager.start();
         this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
-                conf.getExtendingTimeoutPeriod(), logger);
+                conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
         this.loop.start();
 
         this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor, logger,
@@ -92,14 +92,14 @@ public class PlayerSyncer extends JavaPlugin {
 
         logger.setLog(conf.logResults());
 
-        this.listener = new PlayerJoinListener(conf, loader, modifier, bukkitExecutor);
+        this.listener = new PlayerJoinListener(conf, loader, modifier, bukkitExecutor, loop);
         Bukkit.getPluginManager().registerEvents(listener, this);
 
         syncer.register(PlayerHolder.class, PlayerHolder::toString);
 
         this.bungeeJump.getStrategyRegistry().registerStrategy("sync-player", (context) -> {
             UUID uuid = context.getIssuer();
-            this.loader.preTeleportSave(uuid);
+            this.loader.preTeleportLock(uuid);
         });
 
         MySQLPlayerLogDatabase playerLogDatabase = new MySQLPlayerLogDatabase("playersyncer_logs", logDatabase);
@@ -132,17 +132,13 @@ public class PlayerSyncer extends JavaPlugin {
     @Override
     @SneakyThrows
     public void onDisable() {
-        List<CompletableFuture<?>> futures = new ArrayList<>();
-        ExecutorService ex = Executors.newFixedThreadPool(4);
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            val future  = CompletableFuture.supplyAsync(()->{
-                PlayerData data = modifier.extract(player);
-                return loader.saveDisabled(player.getUniqueId(), data);
-            }, ex);
-            futures.add(future);
+        List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
+        for (Player player : players) {
+            PlayerData data = modifier.extract(player);
+            loader.saveDisabled(player.getUniqueId(), data).get();
         }
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(20000L, TimeUnit.MILLISECONDS);
+        loop.end();
+        getLogger().info("disable complete");
 
     }
 

@@ -5,14 +5,19 @@ import com.minepalm.syncer.core.mysql.MySQLSyncedController;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class DistributedSynced<T> implements Synced<T> {
+
 
     private static final long INFINITE = -1;
 
@@ -46,7 +51,7 @@ public class DistributedSynced<T> implements Synced<T> {
 
     @Override
     public CompletableFuture<Boolean> isHold() {
-        return controller.isHold(this.holderRegistry.getLocalHolder().getName());
+        return controller.isHold();
     }
 
     @Override
@@ -55,7 +60,7 @@ public class DistributedSynced<T> implements Synced<T> {
     }
 
     @Override
-    public synchronized void hold(Duration duration) throws ExecutionException, InterruptedException {
+    public void hold(Duration duration) throws ExecutionException, InterruptedException {
         try {
             hold(duration, INFINITE);
         }catch (TimeoutException ignored){
@@ -64,46 +69,70 @@ public class DistributedSynced<T> implements Synced<T> {
     }
 
     @Override
-    public synchronized void hold(Duration duration, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
+    public void hold(Duration duration, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
         tryAcquireLock(System.currentTimeMillis(), duration.toMillis(), timeout);
     }
 
-    private synchronized boolean tryAcquireLock(long issuedTime, long duration, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
+    private static SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSSS");
+
+    private void tryAcquireLock(long issuedTime, long duration, long timeout) throws ExecutionException, InterruptedException, TimeoutException {
         long timeoutTime = issuedTime + timeout;
-        long timeoutAmount = timeout;
+
+        totalCount.addAndGet(1);
 
         if(timeout < 0){
             timeoutTime = Long.MAX_VALUE;
-            timeoutAmount = Long.MAX_VALUE - issuedTime;
         }
 
-        long currentTime = System.currentTimeMillis();
+        long beginTime = System.currentTimeMillis();
 
-        if(timeoutTime <= currentTime){
-            throw new TimeoutException();
-        }
+        while(!controller.tryHold(generateData(this.getObjectKey()).setTime(System.currentTimeMillis()), duration)){
+            if(timeoutTime <= beginTime){
+                //Logger.getGlobal().info("try failed to acquire lock reach timeout(5000ms) "
+                //        +this.getObjectKey()
+                //        +", time: "+format.format(new Date()));
+                totalCount.addAndGet(-1);
+                throw new TimeoutException();
+            }
 
-        boolean acquiredLock = controller.tryHold(generateData(this.getObjectKey()).setTime(currentTime), duration);
-
-        if(!acquiredLock){
             String holderName = controller.getHoldServer().get();
 
-            if(holderName == null){
-                return tryAcquireLock(issuedTime, duration, timeoutAmount);
+            if(holderName != null){
+                boolean subscribedCompleted = sendRequestSubscription(holderName).get();
+                //Logger.getGlobal().info("tried subscribe:"+subscribedCompleted+
+                //        ", id: "+this.getObjectKey()+""+", current holder: "+holderName+
+                //        ", to acquired server name: "+holderRegistry.getLocalHolder().getName()+
+                //        ", time: "+format.format(new Date()));
+
+                if(subscribedCompleted) {
+                    try {
+                        //Logger.getGlobal().info("park wait to receive release id: "+this.getObjectKey()+", current holder: "+holderName+", " +
+                        //        "to acquired server name: "+holderRegistry.getLocalHolder().getName()+", time: "+format.format(new Date()));
+                        park(timeoutTime - beginTime);
+                    }catch (TimeoutException exception){
+                        //Logger.getGlobal().info("park timeout."+this.getObjectKey()+", current holder: "+holderName+", " +
+                        //        "to acquired server name: "+holderRegistry.getLocalHolder().getName()+", time: "+format.format(new Date() ));
+                        totalCount.addAndGet(-1);
+                        throw exception;
+                    }
+                }
             }
 
-            boolean subscribedCompleted = sendRequestSubscription(holderName).get();
+            //Logger.getGlobal().info("retry to acquire lock after 50ms id: "+this.getObjectKey()+
+            //        ", current holder: "+holderName+
+            //        ", to acquired server name: "+holderRegistry.getLocalHolder().getName()+
+            //        ", time: "+format.format(new Date()));
 
-            if(subscribedCompleted) {
-                park(timeoutTime - currentTime);
-            }
-
-            return tryAcquireLock(issuedTime, duration, timeout);
-        }else{
-            this.acquired.set(true);
-            pubSub.openSubscription(this);
-            return true;
+            Thread.sleep(50L);
         }
+
+        //Logger.getGlobal().info("acquired  "
+        //        +this.getObjectKey()
+        //        +", time: "+format.format(new Date()));
+
+        totalCount.addAndGet(-1);
+        this.acquired.set(true);
+        pubSub.openSubscription(this);
     }
 
     private CompletableFuture<Boolean> sendRequestSubscription(String holderName){
@@ -112,12 +141,16 @@ public class DistributedSynced<T> implements Synced<T> {
 
     @Override
     public void release() throws ExecutionException, InterruptedException {
-        if(acquired.get()) {
-            controller.release(generateData(this.getObjectKey()).setCurrentTime());
+        if(controller.release(generateData(this.getObjectKey()).setCurrentTime())) {
+            //Logger.getGlobal().info("release successful id: "+this.getObjectKey()+
+            //        "to acquired server name: "+holderRegistry.getLocalHolder().getName()+", time: "+format.format(new Date()));
             parker.releaseExceptionally();
             pubSub.invokeRetryLock(this);
             pubSub.closeSubscription(this);
             this.acquired.set(false);
+        }else{
+            //Logger.getGlobal().info("release failed id: " + this.getObjectKey() +
+            //        "to acquired server name: " + holderRegistry.getLocalHolder().getName() + ", time: " + format.format(new Date()));
         }
     }
 

@@ -4,6 +4,7 @@ import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.*;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.bukkit.Bukkit;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +24,7 @@ public class PlayerDataController {
         val enderChest = enderChestDataModel.load(uuid);
 
         return CompletableFuture.allOf(inventory, values, enderChest).thenApply(ignored -> {
+            Bukkit.getLogger().severe("load current-thread-name: "+Thread.currentThread().getName());
             try {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
