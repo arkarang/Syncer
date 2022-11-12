@@ -6,6 +6,7 @@ import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -39,6 +40,12 @@ public class PlayerJoinListener implements Listener {
         if(!allowed.get()){
             event.setKickMessage(conf.getIllegalAccessText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+            return;
+        }
+
+        OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
+
+        if(player != null && player.isBanned()){
             return;
         }
 
