@@ -16,6 +16,13 @@
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>acf-repo</id>
+            <url>https://repo.aikar.co/content/groups/aikar/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>co.aikar</groupId>
@@ -32,13 +39,13 @@
         <dependency>
             <groupId>com.minepalm</groupId>
             <artifactId>arkarangutils-bukkit</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.minepalm</groupId>
             <artifactId>arkarangutils-compress</artifactId>
-            <version>1.1-SNAPSHOT</version>
+            <version>1.2-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
