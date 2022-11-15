@@ -9,6 +9,8 @@ import com.minepalm.syncer.bootstrap.SyncerBukkit;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
+import com.minepalm.syncer.player.bukkit.metadata.CustomPlayerMetadataStore;
+import com.minepalm.syncer.player.bukkit.metadata.MetadataStoreInjector;
 import com.minepalm.syncer.player.bukkit.strategies.*;
 import com.minepalm.syncer.player.bukkit.test.DuplicateFinder;
 import com.minepalm.syncer.player.bukkit.test.LoopTest;
@@ -114,6 +116,7 @@ public class PlayerSyncer extends JavaPlugin {
         BukkitCommandManager commandManager = new BukkitCommandManager(this);
         commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase, inventoryDataModel,
                 new PlayerDataGUIFactory(inventoryDataModel)));
+        new MetadataStoreInjector(getLogger()).inject(Bukkit.getServer(), new CustomPlayerMetadataStore(getLogger()));
         ArkarangGUIListener.init();
     }
 
