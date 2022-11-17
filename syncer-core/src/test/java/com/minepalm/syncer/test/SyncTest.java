@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 public class SyncTest {
 
     @Test
+    @Ignore("database access required")
     public void test() throws InterruptedException, ExecutionException, TimeoutException {
         MySQLDatabase database = new MySQLDatabase(Executors.newFixedThreadPool(4));
         DatabaseConfig config = MSLDatabases.HIKARI.copy();
