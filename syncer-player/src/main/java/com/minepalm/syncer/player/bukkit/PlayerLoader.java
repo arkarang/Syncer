@@ -102,11 +102,14 @@ public class PlayerLoader {
         return false;
     }
 
-    public CompletableFuture<Void> saveRuntime(Player player, String reason){
+    public CompletableFuture<Boolean> saveRuntime(Player player, String reason){
         return executor.async(()-> {
-            if( System.currentTimeMillis() - checkPassed(player.getUniqueId()) >= 100L) {
+            if( System.currentTimeMillis() - checkPassed(player.getUniqueId()) >= 1000L) {
                 UUID uuid = player.getUniqueId();
                 save(uuid, modifier.extract(player), reason);
+                return true;
+            }else{
+                return false;
             }
         });
 
@@ -121,7 +124,7 @@ public class PlayerLoader {
         try {
             markPass(uuid);
             synced.hold(Duration.ofMillis(5000L + updatePeriodMills), userTimeoutMills);
-            storage.save(uuid, data).get(3000L, TimeUnit.MILLISECONDS);
+            storage.save(uuid, data).get(30000L, TimeUnit.MILLISECONDS);
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {

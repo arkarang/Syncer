@@ -5,6 +5,7 @@ import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
@@ -86,11 +87,14 @@ public class PlayerJoinListener implements Listener {
     }
     @EventHandler
     public void playerQuit(PlayerQuitEvent event) {
-            loader.saveRuntime(event.getPlayer(), "QUIT");
-            loop.quit(event.getPlayer().getUniqueId());
-            executor.async(()->{
-                MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));
-            });
+        val future = loader.saveRuntime(event.getPlayer(), "QUIT");
+        future.thenAccept(ignored ->{
+            Bukkit.getLogger().warning("duplicated tried saving "+event.getPlayer().getName());
+        });
+        loop.quit(event.getPlayer().getUniqueId());
+        executor.async(() -> {
+            MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));
+        });
 
     }
 
