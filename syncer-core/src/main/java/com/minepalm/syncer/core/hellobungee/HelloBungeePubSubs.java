@@ -1,7 +1,7 @@
 package com.minepalm.syncer.core.hellobungee;
 
-import com.minepalm.syncer.api.SyncHolder;
-import com.minepalm.syncer.api.SyncHolderRegistry;
+import com.minepalm.syncer.api.HoldServer;
+import com.minepalm.syncer.api.HoldServerRegistry;
 import com.minepalm.syncer.api.SyncPubSub;
 import com.minepalm.syncer.api.Synced;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HelloBungeePubSubs implements SyncPubSub {
 
     private final ConcurrentHashMap<String, SubscriptionsList> subscribes = new ConcurrentHashMap<>();
-    private final SyncHolderRegistry holderRegistry;
+    private final HoldServerRegistry holderRegistry;
 
     protected static class SubscriptionsList {
 
@@ -45,9 +45,9 @@ public class HelloBungeePubSubs implements SyncPubSub {
 
         if(subscribes.containsKey(objectId)){
             List<String> names = subscribes.get(objectId).getAll();
-            List<SyncHolder> holders = new ArrayList<>();
+            List<HoldServer> holders = new ArrayList<>();
             for (String name : names) {
-                SyncHolder sender = holderRegistry.getHolder(name);
+                HoldServer sender = holderRegistry.getHolder(name);
                 if(sender != null){
                     holders.add(sender);
                 }
@@ -87,9 +87,9 @@ public class HelloBungeePubSubs implements SyncPubSub {
     public void releaseAll() {
         for (String objectId : subscribes.keySet()) {
             List<String> names = subscribes.get(objectId).getAll();
-            List<SyncHolder> holders = new ArrayList<>();
+            List<HoldServer> holders = new ArrayList<>();
             for (String name : names) {
-                SyncHolder sender = holderRegistry.getHolder(name);
+                HoldServer sender = holderRegistry.getHolder(name);
                 if(sender != null){
                     holders.add(sender);
                 }

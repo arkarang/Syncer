@@ -1,31 +1,31 @@
 package com.minepalm.syncer.core;
 
-import com.minepalm.syncer.api.SyncHolder;
-import com.minepalm.syncer.api.SyncHolderRegistry;
+import com.minepalm.syncer.api.HoldServer;
+import com.minepalm.syncer.api.HoldServerRegistry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor
-public class HolderRegistry implements SyncHolderRegistry {
+public class HolderRegistry implements HoldServerRegistry {
 
     @Getter
     private final String localName;
-    ConcurrentHashMap<String, SyncHolder> holders = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, HoldServer> holders = new ConcurrentHashMap<>();
 
     @Override
-    public SyncHolder getHolder(String name) {
+    public HoldServer getHolder(String name) {
         return holders.get(name);
     }
 
     @Override
-    public void registerHolder(SyncHolder holder) {
+    public void registerHolder(HoldServer holder) {
         holders.put(holder.getName(), holder);
     }
 
     @Override
-    public SyncHolder getLocalHolder() {
+    public HoldServer getLocalHolder() {
         return getHolder(localName);
     }
 }

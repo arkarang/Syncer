@@ -2,7 +2,7 @@ package com.minepalm.syncer.api;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface SyncHolder {
+public interface HoldServer {
 
     String getName();
 

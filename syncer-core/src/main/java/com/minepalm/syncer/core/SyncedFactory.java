@@ -1,6 +1,6 @@
 package com.minepalm.syncer.core;
 
-import com.minepalm.syncer.api.SyncHolderRegistry;
+import com.minepalm.syncer.api.HoldServerRegistry;
 import com.minepalm.syncer.api.SyncPubSub;
 import com.minepalm.syncer.api.SyncToken;
 import com.minepalm.syncer.api.Synced;
@@ -15,7 +15,7 @@ public class SyncedFactory {
 
     private final ConcurrentHashMap<String, Parker> parkers = new ConcurrentHashMap<>();
 
-    private final SyncHolderRegistry holderRegistry;
+    private final HoldServerRegistry holderRegistry;
     private final SyncPubSub pubSub;
     private final MySQLSyncStatusDatabase database;
 

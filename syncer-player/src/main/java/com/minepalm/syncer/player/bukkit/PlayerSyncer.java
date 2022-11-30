@@ -105,7 +105,7 @@ public class PlayerSyncer extends JavaPlugin {
         MySQLExceptionLogDatabase exceptionLogDatabase = new MySQLExceptionLogDatabase("playersyncer_excepitons", logDatabase);
         MySQLLogger.init(playerLogDatabase, exceptionLogDatabase);
 
-        MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*3);
+        MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*1);
 
         Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 

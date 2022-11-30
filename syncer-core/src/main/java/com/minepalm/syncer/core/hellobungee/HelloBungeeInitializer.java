@@ -14,7 +14,7 @@ public class HelloBungeeInitializer {
 
     public static void initialize(SyncService service, HelloEveryone networkModule){
         networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(
-                new HelloBungeeSyncHolder(Executors.newCachedThreadPool(), service.getHolderRegistry(), sender)));
+                new HelloBungeeHoldServer(Executors.newCachedThreadPool(), service.getHolderRegistry(), sender)));
         networkModule.getCallbackService().registerTransformer(new SyncSubscriptionCallback(service.getPubSub()));
         networkModule.getHandler().registerExecutor(new SyncReleaseLockExecutor((Syncer)service));
         networkModule.getGateway().registerAdapter(new SyncReleasedLock.Adapter());

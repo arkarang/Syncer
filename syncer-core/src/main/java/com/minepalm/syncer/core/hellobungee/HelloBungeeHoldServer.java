@@ -1,8 +1,8 @@
 package com.minepalm.syncer.core.hellobungee;
 
 import com.minepalm.hellobungee.api.HelloSender;
-import com.minepalm.syncer.api.SyncHolder;
-import com.minepalm.syncer.api.SyncHolderRegistry;
+import com.minepalm.syncer.api.HoldServer;
+import com.minepalm.syncer.api.HoldServerRegistry;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.hellobungee.entity.SyncReleasedLock;
 import com.minepalm.syncer.core.hellobungee.entity.SyncSubscription;
@@ -12,10 +12,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 @RequiredArgsConstructor
-public class HelloBungeeSyncHolder implements SyncHolder {
+public class HelloBungeeHoldServer implements HoldServer {
 
     private final ExecutorService executor;
-    private final SyncHolderRegistry registry;
+    private final HoldServerRegistry registry;
     private final HelloSender sender;
 
     @Override

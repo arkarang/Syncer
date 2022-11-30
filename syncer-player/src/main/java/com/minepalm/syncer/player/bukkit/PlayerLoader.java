@@ -104,7 +104,7 @@ public class PlayerLoader {
 
     public CompletableFuture<Boolean> saveRuntime(Player player, String reason){
         return executor.async(()-> {
-            if( System.currentTimeMillis() - checkPassed(player.getUniqueId()) >= 1000L) {
+            if( System.currentTimeMillis() - checkPassed(player.getUniqueId()) >= 1000L ) {
                 UUID uuid = player.getUniqueId();
                 save(uuid, modifier.extract(player), reason);
                 return true;
@@ -121,17 +121,23 @@ public class PlayerLoader {
         PlayerHolder holder = new PlayerHolder(uuid);
         Synced<PlayerHolder> synced = service.of(holder);
 
-        try {
-            markPass(uuid);
+        markPass(uuid);
+
+        try{
             synced.hold(Duration.ofMillis(5000L + updatePeriodMills), userTimeoutMills);
-            storage.save(uuid, data).get(30000L, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException | InterruptedException | ExecutionException ignored) {
+
+        }
+
+        try {
+            storage.save(uuid, data).get(5000L, TimeUnit.MILLISECONDS);
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
                 list.add(strategy.onUnload(uuid));
             }
 
-            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(3000L, TimeUnit.MILLISECONDS);
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(5000L, TimeUnit.MILLISECONDS);
             synced.release();
             MySQLLogger.log(PlayerDataLog.saveLog(data), reason);
         } catch (TimeoutException e) {
@@ -169,6 +175,11 @@ public class PlayerLoader {
         Player player = Bukkit.getPlayer(uuid);
         if(player != null) {
             try {
+                PlayerHolder holder = new PlayerHolder(uuid);
+                Synced<PlayerHolder> synced = service.of(holder);
+                if(!synced.isHold().join()){
+                    synced.hold(Duration.ofMillis(3000L), 3000L);
+                }
                 save(uuid, modifier.extract(player), "teleport");
                 markPass(uuid);
             }catch (Throwable ex){

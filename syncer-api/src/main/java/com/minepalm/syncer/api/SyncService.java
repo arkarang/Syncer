@@ -6,7 +6,7 @@ public interface SyncService {
 
     SyncPubSub getPubSub();
 
-    SyncHolderRegistry getHolderRegistry();
+    HoldServerRegistry getHolderRegistry();
 
     <T> Synced<T> of(T t);
 

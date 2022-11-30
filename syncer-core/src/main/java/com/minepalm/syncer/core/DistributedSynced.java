@@ -7,13 +7,10 @@ import lombok.RequiredArgsConstructor;
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class DistributedSynced<T> implements Synced<T> {
@@ -25,7 +22,7 @@ public class DistributedSynced<T> implements Synced<T> {
     private final SyncToken<T> token;
     private final Parker parker;
     private final MySQLSyncedController controller;
-    private final SyncHolderRegistry holderRegistry;
+    private final HoldServerRegistry holderRegistry;
     private final SyncPubSub pubSub;
 
     private final AtomicBoolean acquired = new AtomicBoolean(false);
@@ -45,7 +42,7 @@ public class DistributedSynced<T> implements Synced<T> {
     }
 
     @Override
-    public CompletableFuture<SyncHolder> getHoldServer() {
+    public CompletableFuture<HoldServer> getHoldServer() {
         return controller.getHoldServer().thenApply(holderRegistry::getHolder);
     }
 

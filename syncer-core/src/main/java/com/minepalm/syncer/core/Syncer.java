@@ -16,7 +16,7 @@ public class Syncer implements SyncService {
     @Getter
     SyncPubSub pubSub;
     @Getter
-    SyncHolderRegistry holderRegistry;
+    HoldServerRegistry holderRegistry;
     MySQLSyncStatusDatabase database;
     SyncedFactory factory;
 

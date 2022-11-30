@@ -87,10 +87,7 @@ public class PlayerJoinListener implements Listener {
     }
     @EventHandler
     public void playerQuit(PlayerQuitEvent event) {
-        val future = loader.saveRuntime(event.getPlayer(), "QUIT");
-        future.thenAccept(ignored ->{
-            Bukkit.getLogger().warning("duplicated tried saving "+event.getPlayer().getName());
-        });
+        loader.saveRuntime(event.getPlayer(), "QUIT");
         loop.quit(event.getPlayer().getUniqueId());
         executor.async(() -> {
             MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));

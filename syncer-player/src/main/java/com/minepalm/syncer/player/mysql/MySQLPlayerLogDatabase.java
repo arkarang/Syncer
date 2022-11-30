@@ -32,6 +32,7 @@ public class MySQLPlayerLogDatabase {
                     "`description` TEXT, "+
                     "PRIMARY KEY(`row_id`)) " +
                     "charset=utf8mb4");
+            //
             ps.execute();
         });
     }

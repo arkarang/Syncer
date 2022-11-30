@@ -14,7 +14,7 @@ public interface Synced<T> {
 
     String getObjectKey();
 
-    CompletableFuture<SyncHolder> getHoldServer();
+    CompletableFuture<HoldServer> getHoldServer();
 
     CompletableFuture<Boolean> isHold();
 
