@@ -1,11 +1,9 @@
 package com.minepalm.syncer.bootstrap;
 
 import com.minepalm.arkarangutils.bungee.BungeeConfig;
-import com.minepalm.hellobungee.api.HelloEveryone;
-import com.minepalm.hellobungee.bungee.HelloBungee;
+import com.minepalm.library.PalmLibrary;
+import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.core.Syncer;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
-import kr.travelrpg.travellibrary.bungee.TravelLibraryBungee;
 import net.md_5.bungee.api.event.ServerDisconnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -22,8 +20,8 @@ public class SyncerBungee extends Plugin implements Listener {
     @Override
     public void onEnable(){
         IConf conf = new BungeeConf(this);
-        MySQLDatabase database = TravelLibraryBungee.of().dataSource().mysql(conf.getMySQLName());
-        HelloEveryone network = HelloBungee.getMain();
+        var database = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getMySQLName()).java();
+        PalmNetwork network = PalmLibrary.INSTANCE.getNetwork();
 
         syncer = new Syncer(database, network);
 

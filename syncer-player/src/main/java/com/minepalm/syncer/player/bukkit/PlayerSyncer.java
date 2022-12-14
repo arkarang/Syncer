@@ -5,17 +5,13 @@ import com.minepalm.arkarangutils.bukkit.ArkarangGUIListener;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.bungeejump.impl.BungeeJump;
 import com.minepalm.bungeejump.impl.bukkit.BungeeJumpBukkit;
+import com.minepalm.library.PalmLibrary;
 import com.minepalm.syncer.bootstrap.SyncerBukkit;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.bukkit.strategies.*;
-import com.minepalm.syncer.player.bukkit.test.DuplicateFinder;
-import com.minepalm.syncer.player.bukkit.test.LoopTest;
-import com.minepalm.syncer.player.bukkit.test.TestCommand;
 import com.minepalm.syncer.player.mysql.*;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
-import kr.travelrpg.travellibrary.bukkit.TravelLibraryBukkit;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
@@ -27,10 +23,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class PlayerSyncer extends JavaPlugin {
 
@@ -57,8 +50,8 @@ public class PlayerSyncer extends JavaPlugin {
         TimestampLogger logger = new TimestampLogger(this.getLogger());
         this.syncer = SyncerBukkit.inst();
         this.bungeeJump = BungeeJumpBukkit.getService();
-        MySQLDatabase database = TravelLibraryBukkit.of().dataSource().mysql(conf.getMySQLName());
-        MySQLDatabase logDatabase = TravelLibraryBukkit.of().dataSource().mysql(conf.getLogMySQLName());
+        var database = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getMySQLName()).java();
+        var logDatabase = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getLogMySQLName()).java();
         BukkitExecutor bukkitExecutor = new BukkitExecutor(this, Bukkit.getScheduler());
 
         MySQLPlayerEnderChestDataModel enderChestDataModel
@@ -109,7 +102,6 @@ public class PlayerSyncer extends JavaPlugin {
 
         Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 
-        getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger()), new DuplicateFinder(this.getLogger(), logDatabase)));
         BukkitCommandManager commandManager = new BukkitCommandManager(this);
         commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase, inventoryDataModel,
                 new PlayerDataGUIFactory(inventoryDataModel)));

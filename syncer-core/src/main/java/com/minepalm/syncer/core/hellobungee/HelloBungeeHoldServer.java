@@ -1,6 +1,6 @@
 package com.minepalm.syncer.core.hellobungee;
 
-import com.minepalm.hellobungee.api.HelloSender;
+import com.minepalm.library.network.api.HelloSender;
 import com.minepalm.syncer.api.HoldServer;
 import com.minepalm.syncer.api.HoldServerRegistry;
 import com.minepalm.syncer.api.Synced;
@@ -27,7 +27,7 @@ public class HelloBungeeHoldServer implements HoldServer {
     public CompletableFuture<Boolean> sendSubscribeWaiting(Synced<?> synced) {
         return sender.callback(new SyncSubscription.SyncSubRequest(registry.getLocalName(), synced.getObjectKey()), SyncSubscription.SyncSubResult.class)
                 .async()
-                .thenApplyAsync(SyncSubscription.SyncSubResult::isAccepted, executor);
+                .thenApplyAsync(SyncSubscription.SyncSubResult::accepted, executor);
     }
 
     public CompletableFuture<Boolean> sendTransferHolding(Synced<?> synced) {

@@ -1,6 +1,6 @@
 package com.minepalm.syncer.core.hellobungee.executors;
 
-import com.minepalm.hellobungee.api.HelloExecutor;
+import com.minepalm.library.network.api.HelloExecutor;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.core.hellobungee.entity.SyncReleasedLock;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class SyncReleaseLockExecutor implements HelloExecutor<SyncReleasedLock> 
 
     @Override
     public void executeReceived(SyncReleasedLock signal) {
-        service.signalReleaseLock(signal.getObjectId());
+        service.signalReleaseLock(signal.objectId());
     }
 
 }

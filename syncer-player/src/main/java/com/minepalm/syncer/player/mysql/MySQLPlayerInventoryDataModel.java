@@ -1,11 +1,12 @@
 package com.minepalm.syncer.player.mysql;
 
-import com.minepalm.arkarangutils.compress.CompressedInventorySerializer;
+import com.minepalm.library.bukkit.inventory.Inv;
 import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
+import com.minepalm.library.database.api.JavaDatabase;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.inventory.ItemStack;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
@@ -17,10 +18,10 @@ public class MySQLPlayerInventoryDataModel {
 
 
     private final String table;
-    private final MySQLDatabase database;
+    private final JavaDatabase<Connection> database;
 
     public void init(){
-        database.execute(connection -> {
+        database.run(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`uuid` VARCHAR(36), " +
@@ -33,7 +34,7 @@ public class MySQLPlayerInventoryDataModel {
     }
 
     public void alter(){
-        database.execute(connection -> {
+        database.run(connection -> {
             PreparedStatement ps = connection.prepareStatement("ALTER TABLE "+table+" ADD COLUMN `generated_time` BIGINT DEFAULT 0");
             ps.execute();
         });
@@ -47,7 +48,7 @@ public class MySQLPlayerInventoryDataModel {
 
             if(rs.next()){
                 HashMap<Integer, ItemStack> map = new HashMap<>();
-                ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(rs.getString(1));
+                ItemStack[] items = Inv.getV1_19Compress().itemStackArrayFromBase64(rs.getString(1));
                 for(int i = 0 ; i < items.length ; i++){
                     map.put(i, items[i]);
                 }
@@ -75,7 +76,7 @@ public class MySQLPlayerInventoryDataModel {
                     PreparedStatement ps = connection.prepareStatement("INSERT INTO " + table + " (`uuid`, `data`, `generated_time`) VALUES(?, ?, ?) " +
                             "ON DUPLICATE KEY UPDATE `data`=VALUES(`data`), `generated_time`=VALUES(`generated_time`)");
                     ps.setString(1, uuid.toString());
-                    ps.setString(2, CompressedInventorySerializer.itemStackArrayToBase64(inventory.toArray()));
+                    ps.setString(2, Inv.INSTANCE.getV1_19Compress().itemStackArrayToBase64(inventory.toArray()));
                     ps.setLong(3, inventory.getGeneratedTime());
                     ps.execute();
                 }else{

@@ -1,11 +1,10 @@
 package com.minepalm.syncer.bootstrap;
 
 import com.minepalm.arkarangutils.bukkit.SimpleConfig;
-import com.minepalm.hellobungee.api.HelloEveryone;
-import com.minepalm.hellobungee.bukkit.HelloBukkit;
+import com.minepalm.library.PalmLibrary;
+import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.core.Syncer;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
-import kr.travelrpg.travellibrary.bukkit.TravelLibraryBukkit;
+import lombok.val;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SyncerBukkit extends JavaPlugin {
@@ -19,8 +18,8 @@ public class SyncerBukkit extends JavaPlugin {
     @Override
     public void onEnable() {
         IConf conf = new BukkitConf(this);
-        MySQLDatabase database = TravelLibraryBukkit.of().dataSource().mysql(conf.getMySQLName());
-        HelloEveryone network = HelloBukkit.getMain();
+        var database = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getMySQLName()).java();
+        PalmNetwork network = PalmLibrary.INSTANCE.getNetwork();
 
         syncer = new Syncer(database, network);
 

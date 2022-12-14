@@ -1,8 +1,9 @@
 package com.minepalm.syncer.player.mysql;
 
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
+import com.minepalm.library.database.api.JavaDatabase;
 import lombok.RequiredArgsConstructor;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -10,10 +11,10 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class MySQLExceptionLogDatabase {
     private final String table;
-    private final MySQLDatabase database;
+    private final JavaDatabase<Connection> database;
 
     public void init(){
-        database.execute(connection -> {
+        database.run(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`time` BIGINT, "+

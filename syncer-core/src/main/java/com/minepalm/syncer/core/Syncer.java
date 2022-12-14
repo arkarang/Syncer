@@ -1,17 +1,24 @@
 package com.minepalm.syncer.core;
 
-import com.minepalm.hellobungee.api.HelloEveryone;
+import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.api.*;
 import com.minepalm.syncer.core.hellobungee.HelloBungeeInitializer;
 import com.minepalm.syncer.core.hellobungee.HelloBungeePubSubs;
 import com.minepalm.syncer.core.mysql.MySQLSyncStatusDatabase;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
+import com.minepalm.library.database.api.JavaDatabase;
 import lombok.Getter;
 
+import java.sql.Connection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Syncer implements SyncService {
+public final class Syncer implements SyncService {
+
+    private static SyncService inst = null;
+
+    public static SyncService inst(){
+        return inst;
+    }
 
     @Getter
     SyncPubSub pubSub;
@@ -23,7 +30,7 @@ public class Syncer implements SyncService {
     private final ConcurrentHashMap<Class<?>, SyncToken<?>> tokens = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Synced<?>> syncedObjects = new ConcurrentHashMap<>();
 
-    public Syncer(MySQLDatabase database, HelloEveryone network){
+    public Syncer(JavaDatabase<Connection> database, PalmNetwork network){
         this.holderRegistry = new HolderRegistry(network.getName());
         this.pubSub = new HelloBungeePubSubs(this.holderRegistry);
         this.database = new MySQLSyncStatusDatabase("syncer_status", database);
@@ -31,6 +38,9 @@ public class Syncer implements SyncService {
 
         HelloBungeeInitializer.initialize(this, network);
         this.database.init();
+        if(inst == null){
+            inst = this;
+        }
     }
 
     public void initProcedures(){

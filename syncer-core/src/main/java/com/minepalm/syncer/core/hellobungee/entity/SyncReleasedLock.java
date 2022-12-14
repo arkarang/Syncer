@@ -1,32 +1,27 @@
 package com.minepalm.syncer.core.hellobungee.entity;
 
-import com.minepalm.hellobungee.api.HelloAdapter;
-import com.minepalm.hellobungee.netty.ByteBufUtils;
+import com.minepalm.library.network.api.HelloAdapter;
 import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
-@RequiredArgsConstructor
-@Data
-public class SyncReleasedLock {
+public record SyncReleasedLock(String objectId) {
 
-    private final String objectId;
+    public static class Adapter extends HelloAdapter<SyncReleasedLock> {
 
-    public static class Adapter implements HelloAdapter<SyncReleasedLock>{
 
-        @Override
-        public String getIdentifier() {
-            return SyncReleasedLock.class.getSimpleName();
+        public Adapter() {
+            super(SyncReleasedLock.class.getSimpleName());
         }
 
         @Override
-        public void encode(ByteBuf byteBuf, SyncReleasedLock syncReleasedLock) {
-            ByteBufUtils.writeString(byteBuf, syncReleasedLock.getObjectId());
+        public void encode(@NotNull ByteBuf byteBuf, SyncReleasedLock syncReleasedLock) {
+            writeString(byteBuf, syncReleasedLock.objectId());
         }
 
+        @NotNull
         @Override
-        public SyncReleasedLock decode(ByteBuf byteBuf) {
-            String objectId = ByteBufUtils.readString(byteBuf);
+        public SyncReleasedLock decode(@NotNull ByteBuf byteBuf) {
+            String objectId = readString(byteBuf);
             return new SyncReleasedLock(objectId);
         }
     }

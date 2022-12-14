@@ -1,6 +1,6 @@
 package com.minepalm.syncer.core.hellobungee;
 
-import com.minepalm.hellobungee.api.HelloEveryone;
+import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.api.SyncService;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.core.hellobungee.entity.SyncReleasedLock;
@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 
 public class HelloBungeeInitializer {
 
-    public static void initialize(SyncService service, HelloEveryone networkModule){
+    public static void initialize(SyncService service, PalmNetwork networkModule){
         networkModule.all().forEach(sender-> service.getHolderRegistry().registerHolder(
                 new HelloBungeeHoldServer(Executors.newCachedThreadPool(), service.getHolderRegistry(), sender)));
         networkModule.getCallbackService().registerTransformer(new SyncSubscriptionCallback(service.getPubSub()));

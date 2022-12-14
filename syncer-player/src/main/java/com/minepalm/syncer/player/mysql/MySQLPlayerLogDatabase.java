@@ -1,9 +1,10 @@
 package com.minepalm.syncer.player.mysql;
 
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
+import com.minepalm.library.database.api.JavaDatabase;
 import lombok.RequiredArgsConstructor;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -17,10 +18,10 @@ import java.util.concurrent.CompletableFuture;
 public class MySQLPlayerLogDatabase {
 
     private final String table;
-    private final MySQLDatabase database;
+    private final JavaDatabase<Connection> database;
 
     public void init(){
-        database.execute(connection -> {
+        database.run(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`uuid` VARCHAR(36), " +

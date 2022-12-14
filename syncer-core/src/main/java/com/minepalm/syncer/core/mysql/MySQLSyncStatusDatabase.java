@@ -1,9 +1,10 @@
 package com.minepalm.syncer.core.mysql;
 
+import com.minepalm.library.database.api.JavaDatabase;
 import com.minepalm.syncer.core.HoldData;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,10 +16,10 @@ public class MySQLSyncStatusDatabase {
     // key (String) / holder proxy / holder server / stage / timeout
 
     private final String table;
-    private final MySQLDatabase database;
+    private final JavaDatabase<Connection> database;
 
     public void init(){
-        this.database.execute(connection -> {
+        database.run(connection -> {
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`objectId` VARCHAR(64), " +
@@ -27,12 +28,11 @@ public class MySQLSyncStatusDatabase {
                     "PRIMARY KEY(`objectId`)) " +
                     "charset=utf8mb4");
             ps.execute();
-
         });
     }
 
     public void initProcedures(){
-        this.database.execute(connection -> {
+        this.database.run(connection -> {
             PreparedStatement dropCreateProcedureIfExists = connection.prepareStatement("DROP PROCEDURE IF EXISTS updateHold");
             dropCreateProcedureIfExists.execute();
             PreparedStatement createProcedure = connection.prepareStatement("" +

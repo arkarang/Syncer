@@ -1,13 +1,13 @@
 package com.minepalm.syncer.test;
 
-import com.minepalm.hellobungee.api.HelloEveryone;
-import com.minepalm.hellobungee.netty.HelloMain;
+import com.minepalm.library.database.api.DatabaseConfig;
+import com.minepalm.library.database.impl.internal.DefaultHikariConfig;
+import com.minepalm.library.database.impl.internal.MySQLDB;
+import com.minepalm.library.network.api.PalmNetwork;
+import com.minepalm.library.network.server.HelloMain;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.DebugLogger;
 import com.minepalm.syncer.core.Syncer;
-import kr.msleague.mslibrary.database.MSLDatabases;
-import kr.msleague.mslibrary.database.api.DatabaseConfig;
-import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.junit.Assert;
@@ -15,6 +15,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
+import java.sql.Connection;
 import java.time.Duration;
 import java.util.concurrent.*;
 import java.util.logging.LogManager;
@@ -25,20 +26,22 @@ public class SyncTest {
     @Test
     @Ignore("database access required")
     public void test() throws InterruptedException, ExecutionException, TimeoutException {
-        MySQLDatabase database = new MySQLDatabase(Executors.newFixedThreadPool(4));
-        DatabaseConfig config = MSLDatabases.HIKARI.copy();
+        var mysql = new MySQLDB(Executors.newFixedThreadPool(4));
+        DatabaseConfig config = new DefaultHikariConfig();
 
-        config.setManually("useSSL", "false");
+        config.set("useSSL", "false");
         config.setAddress("localhost");
-        config.setPort(3306);
+        config.setPort("3306");
         config.setDatabase("test");
         config.setUser("root");
         config.setPassword("test");
 
-        database.connect(config);
+        mysql.connect(config);
 
-        HelloEveryone network1 = new HelloMain("test1", new InetSocketAddress(25600), 12345, 67890, Logger.getLogger("global"));
-        HelloEveryone network2 = new HelloMain("test2", new InetSocketAddress(25601), 12345, 67890, Logger.getLogger("global"));
+        var database = mysql.java();
+
+        PalmNetwork network1 = new HelloMain("test1", new InetSocketAddress(25600), 12345, 67890, Logger.getLogger("global"));
+        PalmNetwork network2 = new HelloMain("test2", new InetSocketAddress(25601), 12345, 67890, Logger.getLogger("global"));
 
         network1.getConnections().registerServerInfo("test2", new InetSocketAddress("127.0.0.1", 25601));
         network2.getConnections().registerServerInfo("test1", new InetSocketAddress("127.0.0.1", 25600));

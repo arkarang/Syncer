@@ -1,74 +1,61 @@
 package com.minepalm.syncer.core.hellobungee.entity;
 
-import com.minepalm.hellobungee.api.HelloAdapter;
-import com.minepalm.hellobungee.netty.ByteBufUtils;
+import com.minepalm.library.network.api.HelloAdapter;
 import io.netty.buffer.ByteBuf;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
-@RequiredArgsConstructor
-public class SyncSubscription {
+public final class SyncSubscription {
 
-    @RequiredArgsConstructor
-    @Data
-    public static class SyncSubRequest {
-
-        private final String sender;
-        private final String objectId;
+    public record SyncSubRequest(String sender, String objectId) {
 
     }
 
-    @RequiredArgsConstructor
-    @Data
-    public static class SyncSubResult {
-
-        private final boolean accepted;
-        private final String requester;
-        private final String objectId;
+    public record SyncSubResult(boolean accepted, String requester, String objectId) {
 
     }
 
 
-    public static class SyncSubRequestAdapter implements HelloAdapter<SyncSubRequest> {
+    public static class SyncSubRequestAdapter extends HelloAdapter<SyncSubRequest> {
 
-        @Override
-        public String getIdentifier() {
-            return SyncSubRequest.class.getSimpleName();
+        public SyncSubRequestAdapter() {
+            super(SyncSubRequest.class.getSimpleName());
         }
 
         @Override
-        public void encode(ByteBuf byteBuf, SyncSubRequest request) {
-            ByteBufUtils.writeString(byteBuf, request.getObjectId());
-            ByteBufUtils.writeString(byteBuf, request.getSender());
+        public void encode(@NotNull ByteBuf byteBuf, SyncSubRequest request) {
+            writeString(byteBuf, request.objectId());
+            writeString(byteBuf, request.sender());
         }
 
+        @NotNull
         @Override
-        public SyncSubRequest decode(ByteBuf byteBuf) {
-            String objectId = ByteBufUtils.readString(byteBuf);
-            String sender = ByteBufUtils.readString(byteBuf);
+        public SyncSubRequest decode(@NotNull ByteBuf byteBuf) {
+            String objectId = readString(byteBuf);
+            String sender = readString(byteBuf);
             return new SyncSubRequest(sender, objectId);
         }
     }
 
-    public static class SyncSubResultAdapter implements HelloAdapter<SyncSubResult>{
+    public static class SyncSubResultAdapter extends HelloAdapter<SyncSubResult>{
 
-        @Override
-        public String getIdentifier() {
-            return SyncSubResult.class.getSimpleName();
+
+        public SyncSubResultAdapter() {
+            super(SyncSubResult.class.getSimpleName());
         }
 
         @Override
         public void encode(ByteBuf byteBuf, SyncSubResult result) {
-            byteBuf.writeBoolean(result.isAccepted());
-            ByteBufUtils.writeString(byteBuf, result.getRequester());
-            ByteBufUtils.writeString(byteBuf, result.getObjectId());
+            byteBuf.writeBoolean(result.accepted());
+            writeString(byteBuf, result.requester());
+            writeString(byteBuf, result.objectId());
         }
 
+        @NotNull
         @Override
         public SyncSubResult decode(ByteBuf byteBuf) {
             boolean accepted = byteBuf.readBoolean();
-            String requester = ByteBufUtils.readString(byteBuf);
-            String objectId = ByteBufUtils.readString(byteBuf);
+            String requester = readString(byteBuf);
+            String objectId = readString(byteBuf);
 
             return new SyncSubResult(accepted, requester, objectId);
         }
