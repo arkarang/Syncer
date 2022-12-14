@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class DistributedSynced<T> implements Synced<T> {
 
 
@@ -26,6 +25,42 @@ public class DistributedSynced<T> implements Synced<T> {
     private final SyncPubSub pubSub;
 
     private final AtomicBoolean acquired = new AtomicBoolean(false);
+    private final Unsafe unsafe;
+
+    protected DistributedSynced(T handle,
+                             SyncToken<T> token,
+                             Parker parker,
+                             MySQLSyncedController controller,
+                             HoldServerRegistry holderRegistry,
+                             SyncPubSub pubSub){
+        this.handle = handle;
+        this.token = token;
+        this.parker = parker;
+        this.controller = controller;
+        this.holderRegistry = holderRegistry;
+        this.pubSub = pubSub;
+        this.unsafe = new UnsafeImpl(this, pubSub, controller);
+    }
+
+    @RequiredArgsConstructor
+    private class UnsafeImpl implements Synced.Unsafe{
+
+        private final Synced<T> handle;
+        private final SyncPubSub pubSub;
+        private final MySQLSyncedController controller;
+
+        @Override
+        public void hold() throws ExecutionException, InterruptedException {
+            controller.holdUnsafe(generateData(handle.getObjectKey()));
+            pubSub.openSubscription(handle);
+        }
+
+        @Override
+        public void release() throws ExecutionException, InterruptedException {
+            controller.releaseUnsafe();
+            pubSub.closeSubscription(handle);
+        }
+    }
 
     @Override
     public T get() {
@@ -149,6 +184,11 @@ public class DistributedSynced<T> implements Synced<T> {
             //Logger.getGlobal().info("release failed id: " + this.getObjectKey() +
             //        "to acquired server name: " + holderRegistry.getLocalHolder().getName() + ", time: " + format.format(new Date()));
         }
+    }
+
+    @Override
+    public Unsafe unsafe(){
+        return unsafe;
     }
 
     protected void releasePark(){

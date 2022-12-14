@@ -10,6 +10,7 @@ public interface Synced<T> {
 
     AtomicInteger totalCount = new AtomicInteger(0);
 
+
     T get();
 
     String getObjectKey();
@@ -27,5 +28,14 @@ public interface Synced<T> {
     void hold(Duration duration, long timeout) throws ExecutionException, InterruptedException, TimeoutException;
 
     void release() throws ExecutionException, InterruptedException;
+    Unsafe unsafe();
+
+    interface Unsafe{
+
+        void hold() throws ExecutionException, InterruptedException;
+
+        void release() throws ExecutionException, InterruptedException;
+
+    }
 
 }
