@@ -262,6 +262,7 @@ public class MySQLSyncStatusDatabase {
                 ps2.setString(1, objectId);
                 ps2.setString(2, data.getServer());
                 ps2.setLong(3, data.getTime());
+                ps2.execute();
                 connection.commit();
             }finally {
                 connection.setAutoCommit(true);

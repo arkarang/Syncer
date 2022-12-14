@@ -178,7 +178,7 @@ public class PlayerLoader {
                 PlayerHolder holder = new PlayerHolder(uuid);
                 Synced<PlayerHolder> synced = service.of(holder);
                 if(!synced.isHold().join()){
-                    synced.hold(Duration.ofMillis(3000L), 3000L);
+                    synced.unsafe().hold();
                 }
                 save(uuid, modifier.extract(player), "teleport");
                 markPass(uuid);
