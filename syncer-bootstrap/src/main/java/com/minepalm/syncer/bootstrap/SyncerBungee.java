@@ -54,7 +54,7 @@ public class SyncerBungee extends Plugin implements Listener {
 
         @Override
         public String getMySQLName() {
-            return config.getString("TravelLibrary.mysql");
+            return config.getString("mysql");
         }
     }
 

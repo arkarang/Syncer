@@ -34,11 +34,11 @@ public class PlayerSyncerConf extends SimpleConfig {
     }
 
     public String getMySQLName(){
-        return config.getString("TravelLibrary.inventory");
+        return config.getString("PalmLibrary.inventory");
     }
 
     public String getLogMySQLName(){
-        return config.getString("TravelLibrary.log");
+        return config.getString("PalmLibrary.log");
     }
 
     public boolean logResults(){

@@ -1,3 +1,2 @@
 initProcedure: true
-TravelLibrary:
-  mysql: 'default'
+mysql: 'default'

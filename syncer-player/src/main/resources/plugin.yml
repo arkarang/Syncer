@@ -1,9 +1,10 @@
 main: com.minepalm.syncer.player.bukkit.PlayerSyncer
 name: PlayerSyncer
 author: Arkarang
-version: 1.0.0
+version: 1.19-1.0.0
+api-version: 1.19
 depend:
-  - TravelLibrary
+  - PalmLibrary
   - BungeeJump
   - Syncer
 commands:

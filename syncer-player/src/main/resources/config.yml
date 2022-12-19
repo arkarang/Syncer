@@ -1,4 +1,4 @@
-TravelLibrary:
+PalmLibrary:
   inventory: 'default'
   log: 'log'
 logResult: true

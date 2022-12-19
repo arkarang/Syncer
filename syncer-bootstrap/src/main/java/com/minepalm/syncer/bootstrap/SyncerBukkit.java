@@ -18,8 +18,8 @@ public class SyncerBukkit extends JavaPlugin {
     @Override
     public void onEnable() {
         IConf conf = new BukkitConf(this);
-        var database = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getMySQLName()).java();
-        PalmNetwork network = PalmLibrary.INSTANCE.getNetwork();
+        var database = PalmLibrary.getDataSource().mysql(conf.getMySQLName()).java();
+        PalmNetwork network = PalmLibrary.getNetwork();
 
         syncer = new Syncer(database, network);
 
@@ -42,7 +42,7 @@ public class SyncerBukkit extends JavaPlugin {
 
         @Override
         public String getMySQLName() {
-            return config.getString("TravelLibrary.mysql");
+            return config.getString("mysql");
         }
     }
 }

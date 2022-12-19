@@ -50,8 +50,8 @@ public class PlayerSyncer extends JavaPlugin {
         TimestampLogger logger = new TimestampLogger(this.getLogger());
         this.syncer = SyncerBukkit.inst();
         this.bungeeJump = BungeeJumpBukkit.getService();
-        var database = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getMySQLName()).java();
-        var logDatabase = PalmLibrary.INSTANCE.getDataSource().mysql(conf.getLogMySQLName()).java();
+        var database = PalmLibrary.getDataSource().mysql(conf.getMySQLName()).java();
+        var logDatabase = PalmLibrary.getDataSource().mysql(conf.getLogMySQLName()).java();
         BukkitExecutor bukkitExecutor = new BukkitExecutor(this, Bukkit.getScheduler());
 
         MySQLPlayerEnderChestDataModel enderChestDataModel
