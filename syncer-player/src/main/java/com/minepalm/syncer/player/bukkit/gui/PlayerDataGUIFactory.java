@@ -24,6 +24,11 @@ public class PlayerDataGUIFactory {
         return new PlayerDataGUI(uuid, items);
     }
 
+    public PlayerDataGUI buildEnderChest(UUID uuid, PlayerDataLog inventory) throws IOException {
+        ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(inventory.getEnderChestData());
+        return new PlayerDataGUI(uuid, items);
+    }
+
     public PlayerDataModifyGUI modifyGUI(UUID uuid, PlayerDataInventory inventory){
         return new PlayerDataModifyGUI(uuid, inventory.toArray(), database );
     }

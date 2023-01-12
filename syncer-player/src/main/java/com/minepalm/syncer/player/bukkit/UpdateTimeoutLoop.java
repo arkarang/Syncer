@@ -86,7 +86,7 @@ public class UpdateTimeoutLoop {
 
                 if(savePeriod <= System.currentTimeMillis() - lastSaveTime) {
                     val future2 = future.thenAccept(completed -> {
-                        if (completed) {
+                        if (completed && applier.isActivate("inventory")) {
                             lastSave.put(uuid, System.currentTimeMillis());
                             Player player = Bukkit.getPlayer(uuid);
                             if (player != null) {

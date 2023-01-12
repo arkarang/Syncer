@@ -39,6 +39,10 @@ public class PlayerApplier {
         activates.put(name, b);
     }
 
+    public boolean isActivate(String name){
+        return activates.containsKey(name);
+    }
+
     public void apply(Player player, PlayerData data){
         for (String key : orders) {
             if(activates.containsKey(key)) {

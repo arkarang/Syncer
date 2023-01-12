@@ -24,7 +24,6 @@ public class PlayerLoader {
     private final PlayerApplier modifier;
     private final SyncService service;
     private final BukkitExecutor executor;
-    private final TimestampLogger logger;
 
     private final long updatePeriodMills;
     private final long userTimeoutMills;
@@ -130,7 +129,10 @@ public class PlayerLoader {
         }
 
         try {
-            storage.save(uuid, data).get(5000L, TimeUnit.MILLISECONDS);
+            if(modifier.isActivate("inventory")) {
+                storage.save(uuid, data).get(5000L, TimeUnit.MILLISECONDS);
+                MySQLLogger.log(PlayerDataLog.saveLog(data), reason);
+            }
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
@@ -139,7 +141,6 @@ public class PlayerLoader {
 
             CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(5000L, TimeUnit.MILLISECONDS);
             synced.release();
-            MySQLLogger.log(PlayerDataLog.saveLog(data), reason);
         } catch (TimeoutException e) {
             MySQLLogger.log(PlayerDataLog.saveTimeout(data));
         }catch (ExecutionException | InterruptedException ex) {
@@ -149,7 +150,7 @@ public class PlayerLoader {
         }
     }
 
-    public CompletableFuture<Void> saveDisabled(UUID uuid, PlayerData data){
+    public void saveDisabled(UUID uuid, PlayerData data){
         PlayerHolder holder = new PlayerHolder(uuid);
         Synced<PlayerHolder> synced = service.of(holder);
         try {
@@ -158,16 +159,17 @@ public class PlayerLoader {
                 for (LoadStrategy strategy : customLoadStrategies.values()) {
                     list.add(strategy.onUnload(uuid));
                 }
-                storage.save(uuid, data).get(3000L, TimeUnit.MILLISECONDS);
-                MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
-                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(3000L, TimeUnit.MILLISECONDS);
-                return storage.save(uuid, data);
+
+                if(modifier.isActivate("inventory")) {
+                    storage.save(uuid, data).get(5000L, TimeUnit.MILLISECONDS);
+                    MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
+                }
+                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(5000L, TimeUnit.MILLISECONDS);
             } finally {
                 synced.release();
             }
         } catch (ExecutionException | InterruptedException | TimeoutException ex) {
             MySQLLogger.log(ex);
-            return CompletableFuture.completedFuture(null);
         }
     }
 

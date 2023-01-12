@@ -84,7 +84,7 @@ public class PlayerSyncer extends JavaPlugin {
                 conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
         this.loop.start();
 
-        this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor, logger,
+        this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor,
                 conf.getExtendingTimeoutPeriod(), conf.getTimeout());
 
         conf.getStrategies().forEach(key -> this.modifier.setActivate(key, true));
@@ -134,7 +134,7 @@ public class PlayerSyncer extends JavaPlugin {
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
         for (Player player : players) {
             PlayerData data = modifier.extract(player);
-            loader.saveDisabled(player.getUniqueId(), data).get();
+            loader.saveDisabled(player.getUniqueId(), data);
         }
         loop.end();
         getLogger().info("disable complete");
