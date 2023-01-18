@@ -1,7 +1,7 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
-import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.data.PlayerDataInventory;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -13,11 +13,11 @@ public class SetEquipments implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
-        if(data.getInventory() == null){
+        if(data.inventory() == null){
             return;
         }
 
-        PlayerDataInventory invData = data.getInventory();
+        PlayerDataInventory invData = data.inventory();
         PlayerInventory playerInventory = player.getInventory();
 
         playerInventory.setHelmet(AIR);

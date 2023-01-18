@@ -1,6 +1,6 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
+import com.minepalm.syncer.player.data.PlayerData;
 import org.bukkit.entity.Player;
 
 public interface ApplyStrategy {

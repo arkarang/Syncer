@@ -1,8 +1,10 @@
 package com.minepalm.syncer.player;
 
-import com.minepalm.syncer.player.bukkit.PlayerDataLog;
+import com.minepalm.syncer.player.bukkit.PlayerSyncer;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import com.minepalm.syncer.player.mysql.MySQLExceptionLogDatabase;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
+import org.bukkit.Bukkit;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
@@ -46,6 +48,7 @@ public class MySQLLogger {
     public static void log(Throwable ex){
         if(exceptionLogDatabase != null){
             exceptionLogDatabase.log(ex, System.currentTimeMillis());
+            Bukkit.getScheduler().runTask(PlayerSyncer.getInst(), ()->{ex.printStackTrace();});
         }
     }
 

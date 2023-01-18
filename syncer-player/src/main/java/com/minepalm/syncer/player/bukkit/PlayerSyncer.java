@@ -6,11 +6,14 @@ import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.bungeejump.impl.BungeeJump;
 import com.minepalm.bungeejump.impl.bukkit.BungeeJumpBukkit;
 import com.minepalm.library.PalmLibrary;
+import com.minepalm.library.bukkit.Inv;
 import com.minepalm.syncer.bootstrap.SyncerBukkit;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.bukkit.strategies.*;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import com.minepalm.syncer.player.mysql.*;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -39,10 +42,6 @@ public class PlayerSyncer extends JavaPlugin {
     @Getter
     PlayerLoader loader;
 
-    //TransactionLoop transactionLoop;
-
-    //PlayerTransactionManager manager;
-
     @Override
     public void onEnable() {
         inst = this;
@@ -50,6 +49,7 @@ public class PlayerSyncer extends JavaPlugin {
         TimestampLogger logger = new TimestampLogger(this.getLogger());
         this.syncer = SyncerBukkit.inst();
         this.bungeeJump = BungeeJumpBukkit.getService();
+        PlayerDataLog.serializer = Inv.getSerializer();
         var database = PalmLibrary.getDataSource().mysql(conf.getMySQLName()).java();
         var logDatabase = PalmLibrary.getDataSource().mysql(conf.getLogMySQLName()).java();
         BukkitExecutor bukkitExecutor = new BukkitExecutor(this, Bukkit.getScheduler());
@@ -60,19 +60,16 @@ public class PlayerSyncer extends JavaPlugin {
                 = new MySQLPlayerInventoryDataModel("playersyncer_inventory", database);
         MySQLPlayerValuesDataModel valuesDataModel
                 = new MySQLPlayerValuesDataModel("playersyner_values", database);
+        MySQLPlayerPotionDatabase potionDatabase
+                = new MySQLPlayerPotionDatabase("playersyncer_potions", database);
 
         enderChestDataModel.init();
         inventoryDataModel.init();
         valuesDataModel.init();
+        potionDatabase.init();
 
         this.modifier = initialize(new PlayerApplier(logger));
-        //transactionLoop = new TransactionLoop(
-        //        Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50);
-        //transactionLoop.start();
-        //manager = new PlayerTransactionManager(transactionLoop);
-        //manager = new PlayerTransactionManager(Executors.newSingleThreadExecutor(), Executors.newCachedThreadPool(), 50L);
-        //manager.start();
-        this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel);
+        this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel, potionDatabase);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
                 conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
         this.loop.start();
@@ -139,6 +136,7 @@ public class PlayerSyncer extends JavaPlugin {
         modifier.registerStrategy("inventory", new SetInventory(this.getLogger()));
         modifier.registerStrategy("equipments", new SetEquipments());
         modifier.registerStrategy("level", new SetLevel());
+        modifier.registerStrategy("potion", new SetPotion());
         modifier.registerStrategy("exp", new SetExp());
         modifier.registerStrategy("gamemode", new SetGamemode());
         modifier.registerStrategy("fly", new SetFly());

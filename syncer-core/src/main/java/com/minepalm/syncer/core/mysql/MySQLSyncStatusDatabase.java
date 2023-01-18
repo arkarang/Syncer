@@ -1,6 +1,6 @@
 package com.minepalm.syncer.core.mysql;
 
-import com.minepalm.library.database.api.JavaDatabase;
+import com.minepalm.library.database.JavaDatabase;
 import com.minepalm.syncer.core.HoldData;
 import lombok.RequiredArgsConstructor;
 

@@ -3,6 +3,8 @@ package com.minepalm.syncer.player.bukkit;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;

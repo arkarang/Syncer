@@ -1,9 +1,7 @@
 package com.minepalm.syncer.player.bukkit;
 
-import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
-import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
-import com.minepalm.syncer.player.mysql.MySQLPlayerValuesDataModel;
-import com.minepalm.syncer.player.mysql.PlayerDataController;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.mysql.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,9 +15,10 @@ public class PlayerDataStorage {
     private final MySQLPlayerEnderChestDataModel enderChestDataModel;
     private final MySQLPlayerValuesDataModel valuesDataModel;
     private final MySQLPlayerInventoryDataModel inventoryDataModel;
+    private final MySQLPlayerPotionDatabase potionDatabase;
 
     private PlayerDataController getController(UUID uuid){
-        return new PlayerDataController(uuid, inventoryDataModel, valuesDataModel, enderChestDataModel);
+        return new PlayerDataController(uuid, inventoryDataModel, valuesDataModel, enderChestDataModel, potionDatabase);
     }
 
     public CompletableFuture<PlayerData> getPlayerData(UUID uuid) {

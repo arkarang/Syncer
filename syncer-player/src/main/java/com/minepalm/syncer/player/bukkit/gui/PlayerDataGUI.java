@@ -1,7 +1,7 @@
 package com.minepalm.syncer.player.bukkit.gui;
 
 import com.minepalm.arkarangutils.bukkit.ArkarangGUI;
-import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
+import com.minepalm.syncer.player.data.PlayerDataInventory;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;

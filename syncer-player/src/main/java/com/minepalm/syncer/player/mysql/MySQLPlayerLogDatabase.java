@@ -1,7 +1,7 @@
 package com.minepalm.syncer.player.mysql;
 
-import com.minepalm.syncer.player.bukkit.PlayerDataLog;
-import com.minepalm.library.database.api.JavaDatabase;
+import com.minepalm.library.database.JavaDatabase;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.Connection;

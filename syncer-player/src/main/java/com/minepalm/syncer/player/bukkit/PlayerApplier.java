@@ -2,6 +2,10 @@ package com.minepalm.syncer.player.bukkit;
 
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.ApplyStrategy;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.data.PlayerDataEnderChest;
+import com.minepalm.syncer.player.data.PlayerDataInventory;
+import com.minepalm.syncer.player.data.PlayerDataPotion;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 
@@ -67,6 +71,7 @@ public class PlayerApplier {
         PlayerDataValues values = new PlayerDataValues(health, healthScale, level, foodLevel, exp, saturation, exhaustion, heldSlot, gamemode, isFly);
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
         PlayerDataEnderChest enderChest = PlayerDataEnderChest.of(player.getEnderChest());
-        return new PlayerData(player.getUniqueId(), values, inventory, enderChest);
+        PlayerDataPotion potions = new PlayerDataPotion(player.getActivePotionEffects());
+        return new PlayerData(player.getUniqueId(), values, inventory, enderChest, potions);
     }
 }

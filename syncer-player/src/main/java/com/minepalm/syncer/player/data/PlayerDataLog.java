@@ -1,17 +1,18 @@
-package com.minepalm.syncer.player.bukkit;
+package com.minepalm.syncer.player.data;
 
-import com.minepalm.library.bukkit.inventory.Inv;
+import com.minepalm.library.bukkit.InvSerializer;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
 public class PlayerDataLog {
+
+    public static InvSerializer serializer;
 
     public final String task_name;
     public final UUID uuid;
@@ -74,8 +75,8 @@ public class PlayerDataLog {
     }
 
     public static PlayerDataLog nullLog(UUID uuid, String taskName) {
-        String inventoryData = Inv.getV1_19Compress().itemStackArrayToBase64(new ItemStack[0]);
-        String enderChestData = Inv.getV1_19Compress().itemStackArrayToBase64(new ItemStack[0]);
+        String inventoryData = serializer.itemStackArrayToBase64(new ItemStack[0]);
+        String enderChestData = serializer.itemStackArrayToBase64(new ItemStack[0]);
         long dataGeneratedTime = 0;
         long logGeneratedTime = System.currentTimeMillis();
 
@@ -85,23 +86,23 @@ public class PlayerDataLog {
 
     @NotNull
     private static PlayerDataLog toLog(PlayerData data, String taskName) {
-        UUID uuid = data.getUuid();
+        UUID uuid = data.uuid();
         String inventoryData;
         String enderChestData;
         long dataGeneratedTime;
 
-        if(data.getInventory() != null){
-            inventoryData = Inv.getV1_19Compress().itemStackArrayToBase64(data.getInventory().toArray());
-            dataGeneratedTime = data.getInventory().getGeneratedTime();
+        if(data.inventory() != null){
+            inventoryData = serializer.itemStackArrayToBase64(data.inventory().toArray());
+            dataGeneratedTime = data.inventory().getGeneratedTime();
         }else{
-            inventoryData = Inv.getV1_19Compress().itemStackArrayToBase64(new ItemStack[0]);
+            inventoryData = serializer.itemStackArrayToBase64(new ItemStack[0]);
             dataGeneratedTime = 0;
         }
 
-        if(data.getEnderChest() != null){
-            enderChestData = Inv.getV1_19Compress().itemStackArrayToBase64(data.getEnderChest().toArray());
+        if(data.enderChest() != null){
+            enderChestData = serializer.itemStackArrayToBase64(data.enderChest().toArray());
         }else{
-            enderChestData = Inv.getV1_19Compress().itemStackArrayToBase64(new ItemStack[0]);
+            enderChestData = serializer.itemStackArrayToBase64(new ItemStack[0]);
         }
 
         long logGeneratedTime = System.currentTimeMillis();

@@ -1,6 +1,6 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
+import com.minepalm.syncer.player.data.PlayerData;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -15,7 +15,7 @@ public class SetInventory implements ApplyStrategy {
     private final Logger logger;
     @Override
     public void applyPlayer(Player player, PlayerData data) {
-        if(data.getInventory() == null){
+        if(data.inventory() == null){
             logger.warning("player "+player.getName()+"("+player.getUniqueId()+") inventory is null");
             return;
         }
@@ -28,22 +28,22 @@ public class SetInventory implements ApplyStrategy {
         player.getInventory().setLeggings(new ItemStack(Material.AIR));
         player.getInventory().setBoots(new ItemStack(Material.AIR));
 
-        for (Map.Entry<Integer, ItemStack> entry : data.getInventory().getItems().entrySet()) {
+        for (Map.Entry<Integer, ItemStack> entry : data.inventory().getItems().entrySet()) {
             if(entry.getKey() < 36 && entry.getKey() >= 0) {
                 player.getInventory().setItem(entry.getKey(), entry.getValue());
             }
         }
 
-        player.getInventory().setHelmet(data.getInventory().getHelmet());
-        player.getInventory().setChestplate(data.getInventory().getChest());
-        player.getInventory().setLeggings(data.getInventory().getLeggings());
-        player.getInventory().setBoots(data.getInventory().getBoots());
+        player.getInventory().setHelmet(data.inventory().getHelmet());
+        player.getInventory().setChestplate(data.inventory().getChest());
+        player.getInventory().setLeggings(data.inventory().getLeggings());
+        player.getInventory().setBoots(data.inventory().getBoots());
 
-        if(data.getValues() == null){
+        if(data.values() == null){
             return;
         }
 
-        player.getInventory().setHeldItemSlot(data.getValues().getHeldSlot());
+        player.getInventory().setHeldItemSlot(data.values().getHeldSlot());
         player.updateInventory();
 
     }

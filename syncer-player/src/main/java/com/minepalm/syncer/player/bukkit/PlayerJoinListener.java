@@ -1,11 +1,9 @@
 package com.minepalm.syncer.player.bukkit;
 
-import com.destroystokyo.paper.event.player.PlayerInitialSpawnEvent;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
-import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;

@@ -1,21 +1,21 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
+import com.minepalm.syncer.player.data.PlayerData;
 import org.bukkit.entity.Player;
 
 public class SetFly implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
-        if(data.getValues() == null){
+        if(data.values() == null){
             return;
         }
 
         boolean isFly;
-        if(data.getValues().getGamemode() == 1){
+        if(data.values().getGamemode() == 1){
             isFly = true;
         }else{
-            isFly = data.getValues().isFly();
+            isFly = data.values().isFly();
         }
 
         player.setAllowFlight(isFly);

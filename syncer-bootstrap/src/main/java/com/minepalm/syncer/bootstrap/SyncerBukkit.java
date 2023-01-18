@@ -4,7 +4,6 @@ import com.minepalm.arkarangutils.bukkit.SimpleConfig;
 import com.minepalm.library.PalmLibrary;
 import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.core.Syncer;
-import lombok.val;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SyncerBukkit extends JavaPlugin {

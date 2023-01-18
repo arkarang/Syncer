@@ -1,6 +1,6 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
+import com.minepalm.syncer.player.data.PlayerData;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,15 +14,15 @@ public class SetCurrentHealth implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
-        if(data.getValues() == null){
+        if(data.values() == null){
             return;
         }
 
         scheduler.runTaskLater(plugin, ()->{
-            if(player.getMaxHealth() <= data.getValues().getHealth()){
+            if(player.getMaxHealth() <= data.values().getHealth()){
                 player.setHealth(player.getMaxHealth());
             }else {
-                player.setHealth(data.getValues().getHealth());
+                player.setHealth(data.values().getHealth());
             }
         }, 5L);
     }

@@ -7,6 +7,8 @@ import com.minepalm.syncer.api.SyncService;
 import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
+import com.minepalm.syncer.player.data.PlayerData;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -59,7 +61,7 @@ public class PlayerLoader {
                 return LoadResult.FAILED;
             }
 
-            if(data.getInventory() == null){
+            if(data.inventory() == null){
                 MySQLLogger.log(PlayerDataLog.nullLog(uuid, "LOAD_NULL"));
             }else{
                 MySQLLogger.log(PlayerDataLog.loadLog(data));
@@ -158,14 +160,13 @@ public class PlayerLoader {
                 for (LoadStrategy strategy : customLoadStrategies.values()) {
                     list.add(strategy.onUnload(uuid));
                 }
-                storage.save(uuid, data).get(3000L, TimeUnit.MILLISECONDS);
                 MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
-                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(3000L, TimeUnit.MILLISECONDS);
+                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get();
                 return storage.save(uuid, data);
             } finally {
                 synced.release();
             }
-        } catch (ExecutionException | InterruptedException | TimeoutException ex) {
+        } catch (ExecutionException | InterruptedException ex) {
             MySQLLogger.log(ex);
             return CompletableFuture.completedFuture(null);
         }

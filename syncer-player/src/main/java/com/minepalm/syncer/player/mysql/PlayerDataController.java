@@ -2,6 +2,7 @@ package com.minepalm.syncer.player.mysql;
 
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.*;
+import com.minepalm.syncer.player.data.*;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -18,18 +19,22 @@ public class PlayerDataController {
     private final MySQLPlayerValuesDataModel valuesDataModel;
     private final MySQLPlayerEnderChestDataModel enderChestDataModel;
 
+    private final MySQLPlayerPotionDatabase potionDatabase;
+
     public CompletableFuture<PlayerData> load(){
         val inventory = inventoryDataModel.load(uuid);
         val values = valuesDataModel.load(uuid);
         val enderChest = enderChestDataModel.load(uuid);
+        val potion = potionDatabase.load(uuid);
 
         return CompletableFuture.allOf(inventory, values, enderChest).thenApply(ignored -> {
-            Bukkit.getLogger().severe("load current-thread-name: "+Thread.currentThread().getName());
             try {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
                 PlayerDataEnderChest enderChestData = enderChest.get();
-                return new PlayerData(uuid, data, inv, enderChestData);
+                PlayerDataPotion potionData = potion.get();
+
+                return new PlayerData(uuid, data, inv, enderChestData, potionData);
             }catch (InterruptedException | ExecutionException e){
                 MySQLLogger.log(e);
                 return null;
@@ -38,17 +43,12 @@ public class PlayerDataController {
     }
 
     public CompletableFuture<Void> save(PlayerData data){
-        val inventoryFuture = inventoryDataModel.save(uuid, data.getInventory());
-        val valuesFuture = valuesDataModel.save(uuid, data.getValues());
-        val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
+        val inventoryFuture = inventoryDataModel.save(uuid, data.inventory());
+        val valuesFuture = valuesDataModel.save(uuid, data.values());
+        val enderChestFuture = enderChestDataModel.save(uuid, data.enderChest());
+        val potionFuture = potionDatabase.save(uuid, data.potions());
 
-        inventoryFuture.thenAccept(triedDuplicated -> {
-            if(triedDuplicated){
-                MySQLLogger.log(PlayerDataLog.duplicateSaveLog(data));
-            }
-        });
-
-        return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
+        return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture, potionFuture);
     }
 
     public CompletableFuture<Void> save(PlayerData data, long afterMills){
@@ -59,9 +59,9 @@ public class PlayerDataController {
 
             }
         }).thenCompose(ignored -> {
-            val inventoryFuture = inventoryDataModel.save(uuid, data.getInventory());
-            val valuesFuture = valuesDataModel.save(uuid, data.getValues());
-            val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
+            val inventoryFuture = inventoryDataModel.save(uuid, data.inventory());
+            val valuesFuture = valuesDataModel.save(uuid, data.values());
+            val enderChestFuture = enderChestDataModel.save(uuid, data.enderChest());
             return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
         });
     }

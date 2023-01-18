@@ -1,4 +1,4 @@
-package com.minepalm.syncer.player.bukkit;
+package com.minepalm.syncer.player.data;
 
 import com.google.common.collect.ImmutableMap;
 import org.bukkit.Material;

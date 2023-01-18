@@ -7,6 +7,7 @@ import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
+import com.minepalm.syncer.player.data.PlayerDataLog;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
 import lombok.RequiredArgsConstructor;
@@ -137,7 +138,8 @@ public class InspectCommands extends BaseCommand {
 
         executor.async(()->{
             try{
-                factory.build(log.get(index).uuid, log.get(index)).openGUI(player);
+                var gui = factory.build(log.get(index).uuid, log.get(index));
+                executor.sync(() -> {gui.openGUI(player);});
             }catch (IOException e){
                 e.printStackTrace();
             }
@@ -180,7 +182,8 @@ public class InspectCommands extends BaseCommand {
         }
         executor.async(()->{
             try {
-                factory.modifyGUI(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get()).openGUI(player);
+                var gui = factory.modifyGUI(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get());
+                executor.sync(() -> {gui.openGUI(player);});
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -196,7 +199,8 @@ public class InspectCommands extends BaseCommand {
         }
         executor.async(()->{
             try {
-                factory.build(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get()).openGUI(player);
+                var gui = factory.build(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get());
+                executor.sync(() -> {gui.openGUI(player);});
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }

@@ -1,6 +1,6 @@
 package com.minepalm.syncer.player.mysql;
 
-import com.minepalm.library.database.api.JavaDatabase;
+import com.minepalm.library.database.JavaDatabase;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.Connection;
@@ -34,7 +34,11 @@ public class MySQLExceptionLogDatabase {
             ps.setLong(1, time);
             ps.setString(2, ex.getClass().getSimpleName());
             ps.setString(3, ex.getMessage());
-            ps.setString(4, Arrays.toString(ex.getStackTrace()));
+            if(ex.getCause() != null){
+                ps.setString(4, Arrays.toString(ex.getCause().getStackTrace()));
+            }else {
+                ps.setString(4, Arrays.toString(ex.getStackTrace()));
+            }
             ps.execute();
             return null;
         });

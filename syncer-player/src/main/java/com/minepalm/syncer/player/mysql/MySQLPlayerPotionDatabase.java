@@ -3,6 +3,7 @@ package com.minepalm.syncer.player.mysql;
 import com.minepalm.library.bukkit.Inv;
 import com.minepalm.library.database.JavaDatabase;
 import com.minepalm.syncer.player.data.PlayerDataEnderChest;
+import com.minepalm.syncer.player.data.PlayerDataPotion;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.inventory.ItemStack;
 
@@ -14,13 +15,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
-public class MySQLPlayerEnderChestDataModel {
+public class MySQLPlayerPotionDatabase {
 
     private final String table;
     private final JavaDatabase<Connection> database;
 
     public void init(){
-        database.run(connection -> {
+        database.run(connection ->{
             PreparedStatement ps = connection.prepareStatement("CREATE TABLE IF NOT EXISTS " + table + " ( " +
                     "`row_id` BIGINT AUTO_INCREMENT UNIQUE, " +
                     "`uuid` VARCHAR(36), " +
@@ -31,38 +32,28 @@ public class MySQLPlayerEnderChestDataModel {
         });
     }
 
-    CompletableFuture<PlayerDataEnderChest> load(UUID uuid){
+    public CompletableFuture<Void> save(UUID uuid, PlayerDataPotion data){
+        return database.executeAsync(connection -> {
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" (`uuid`, `data`) VALUES(?, ?) ON DUPLICATE KEY UPDATE `data`=VALUES(`data`)");
+            ps.setString(1, uuid.toString());
+            ps.setString(2, data.toJson());
+            ps.execute();
+            return null;
+        });
+    }
+
+    public CompletableFuture<PlayerDataPotion> load(UUID uuid){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("SELECT `data` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
 
             if(rs.next()){
-                try {
-                    HashMap<Integer, ItemStack> map = new HashMap<>();
-                    ItemStack[] items = Inv.getSerializer().itemStackArrayFromBase64(rs.getString(1));
-                    for(int i = 0 ; i < items.length ; i++){
-                        map.put(i, items[i]);
-                    }
-
-                    return PlayerDataEnderChest.of(map);
-                }catch (Throwable ignored){
-
-                }
+                return PlayerDataPotion.from(rs.getString(1));
             }
 
-            return null;
+            return PlayerDataPotion.empty();
 
-        });
-    }
-
-    CompletableFuture<Void> save(UUID uuid, PlayerDataEnderChest enderChest){
-        return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" (`uuid`, `data`) VALUES(?, ?) ON DUPLICATE KEY UPDATE `data`=VALUES(`data`)");
-            ps.setString(1, uuid.toString());
-            ps.setString(2, Inv.getSerializer().itemStackArrayToBase64(enderChest.toArray()));
-            ps.execute();
-            return null;
         });
     }
 

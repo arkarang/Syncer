@@ -1,17 +1,17 @@
 package com.minepalm.syncer.player.bukkit.strategies;
 
-import com.minepalm.syncer.player.bukkit.PlayerData;
+import com.minepalm.syncer.player.data.PlayerData;
 import org.bukkit.entity.Player;
 
 public class SetLevel implements ApplyStrategy {
 
     @Override
     public void applyPlayer(Player player, PlayerData data) {
-        if(data.getValues() == null){
+        if(data.values() == null){
             return;
         }
 
-        player.setLevel(data.getValues().getLevel());
+        player.setLevel(data.values().getLevel());
     }
 
 }

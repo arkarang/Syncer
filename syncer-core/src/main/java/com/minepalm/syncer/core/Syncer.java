@@ -1,11 +1,11 @@
 package com.minepalm.syncer.core;
 
+import com.minepalm.library.database.JavaDatabase;
 import com.minepalm.library.network.api.PalmNetwork;
 import com.minepalm.syncer.api.*;
 import com.minepalm.syncer.core.hellobungee.HelloBungeeInitializer;
 import com.minepalm.syncer.core.hellobungee.HelloBungeePubSubs;
 import com.minepalm.syncer.core.mysql.MySQLSyncStatusDatabase;
-import com.minepalm.library.database.api.JavaDatabase;
 import lombok.Getter;
 
 import java.sql.Connection;

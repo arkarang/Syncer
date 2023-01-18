@@ -1,6 +1,6 @@
 package com.minepalm.syncer.test;
 
-import com.minepalm.library.database.api.DatabaseConfig;
+import com.minepalm.library.database.DatabaseConfig;
 import com.minepalm.library.database.impl.internal.DefaultHikariConfig;
 import com.minepalm.library.database.impl.internal.MySQLDB;
 import com.minepalm.library.network.api.PalmNetwork;
