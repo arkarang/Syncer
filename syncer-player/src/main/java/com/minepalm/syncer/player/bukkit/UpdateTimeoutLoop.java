@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class UpdateTimeoutLoop {
@@ -30,7 +29,7 @@ public class UpdateTimeoutLoop {
     private final long periodMills;
 
     private final long savePeriod;
-    private final TimestampLogger logger;
+    private long delayed = 0L;
     private final AtomicBoolean run = new AtomicBoolean(false);
 
     synchronized void start() {
@@ -38,11 +37,14 @@ public class UpdateTimeoutLoop {
         service.submit(() -> {
             while (run.get()) {
                 try {
-                    long estimateTime = loop();
+                    long estimateTime = loop(delayed);
                     if (periodMills >= estimateTime) {
+                        delayed = 0L;
                         Thread.sleep(periodMills - estimateTime);
+                    }else {
+                        delayed = estimateTime - periodMills;
                     }
-                } catch (ExecutionException | InterruptedException e) {
+                } catch (ExecutionException | InterruptedException ignored) {
 
                 }
             }
@@ -67,7 +69,7 @@ public class UpdateTimeoutLoop {
         lastSave.remove(uuid);
     }
 
-    long loop() throws ExecutionException, InterruptedException {
+    long loop(long lastDelayedTime) throws ExecutionException, InterruptedException {
         long now = System.currentTimeMillis();
 
         List<UUID> list = new ArrayList<>();
@@ -84,7 +86,7 @@ public class UpdateTimeoutLoop {
             if ( periodMills <= System.currentTimeMillis() - lastUpdateTime ) {
 
                 lastUpdate.put(uuid, System.currentTimeMillis());
-                val future = synced.updateTimeout(periodMills);
+                val future = synced.extendTimeout(periodMills + lastDelayedTime);
 
                 if(savePeriod <= System.currentTimeMillis() - lastSaveTime) {
                     val future2 = future.thenAccept(completed -> {
@@ -114,13 +116,11 @@ public class UpdateTimeoutLoop {
         }
 
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get(10000L, TimeUnit.MILLISECONDS);
-            CompletableFuture.allOf(saveFutures.toArray(new CompletableFuture<?>[0])).get(10000L, TimeUnit.MILLISECONDS);
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0])).get(600000L, TimeUnit.MILLISECONDS);
+            CompletableFuture.allOf(saveFutures.toArray(new CompletableFuture<?>[0])).get(600000L, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             int size1 = (int) saveFutures.stream().filter(CompletableFuture::isDone).count();
-            Bukkit.getOnlinePlayers().stream().filter(Player::isOp).collect(Collectors.toList()).forEach(player -> {
-                player.sendMessage("§4§l[PLAYER-SYNCER] 서버 자동저장 타임아웃 감지 ( 창고/채팅 확인해보세요 )");
-            });
+            Bukkit.getLogger().severe("PlayerSyncer autosave timeout invoked. waits 60 seconds, give up.");
         }
 
         return System.currentTimeMillis() - now;

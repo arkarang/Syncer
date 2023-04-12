@@ -10,7 +10,6 @@ public class SetExp implements ApplyStrategy {
         if(data.values() == null){
             return;
         }
-
         player.setExp(data.values().getExp());
     }
 

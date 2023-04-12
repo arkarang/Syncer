@@ -4,26 +4,38 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Parker {
 
-    private CompletableFuture<Void> future = new CompletableFuture<>();
+    private AtomicReference<CompletableFuture<Void>> future = new AtomicReference<>(new CompletableFuture<>());
 
     public void park(long mills) throws TimeoutException {
         try {
-            future.get(mills, TimeUnit.MILLISECONDS);
-        }catch (InterruptedException | ExecutionException ignored){
-
+            future.get().get(mills, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            // 적절한 로깅이나 예외 처리를 추가할 수 있습니다.
+            e.printStackTrace();
+        } catch (TimeoutException e) {
+            throw e;
         }
     }
 
-    public synchronized void release(){
-        future.complete(null);
-        this.future = new CompletableFuture<>();
+    public void release() {
+        CompletableFuture<Void> oldFuture;
+        do {
+            oldFuture = future.get();
+        } while (!future.compareAndSet(oldFuture, new CompletableFuture<>()));
+
+        oldFuture.complete(null);
     }
 
-    public synchronized void releaseExceptionally(){
-        future.completeExceptionally(new InterruptedException());
-        this.future = new CompletableFuture<>();
+    public void releaseExceptionally() {
+        CompletableFuture<Void> oldFuture;
+        do {
+            oldFuture = future.get();
+        } while (!future.compareAndSet(oldFuture, new CompletableFuture<>()));
+
+        oldFuture.completeExceptionally(new InterruptedException());
     }
 }

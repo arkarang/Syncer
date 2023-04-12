@@ -72,6 +72,33 @@ public class InspectCommands extends BaseCommand {
 
     }
 
+    @Subcommand("ender")
+    public void openEnder(Player player, int index){
+        if(!map.containsKey(player.getUniqueId())){
+            player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
+            return;
+        }
+        List<PlayerDataLog> log = map.get(player.getUniqueId());
+
+        if(index < 0){
+            player.sendMessage("0 이상의 숫자를 입력해주세요.");
+            return;
+        }
+        if(index >= log.size()){
+            player.sendMessage(log.size()+" 미만의 이상의 숫자를 입력해주세요.");
+            return;
+        }
+
+        executor.async(()->{
+            try{
+                factory.buildEnderChest(log.get(index).uuid, log.get(index)).openGUI(player);
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        });
+
+    }
+
     private void cacheAndPrint(Player player, List<PlayerDataLog> list){
         map.put(player.getUniqueId(), list);
         int count = 0;
@@ -189,6 +216,7 @@ public class InspectCommands extends BaseCommand {
             }
         });
     }
+    
 
     @Subcommand("see")
     public void see(Player player, String username){

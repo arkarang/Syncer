@@ -109,12 +109,10 @@ public class SyncTest {
     }
 
     @RequiredArgsConstructor
-    private static class BaseTimer{
+        private record BaseTimer(long baseTime) {
 
-        private final long baseTime;
-
-        long record(){
-            return System.currentTimeMillis() - baseTime;
+            long record() {
+                return System.currentTimeMillis() - baseTime;
+            }
         }
-    }
 }

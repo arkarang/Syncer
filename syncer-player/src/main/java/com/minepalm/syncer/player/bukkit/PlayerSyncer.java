@@ -71,7 +71,7 @@ public class PlayerSyncer extends JavaPlugin {
         this.modifier = initialize(new PlayerApplier(logger));
         this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel, potionDatabase);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
-                conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
+                conf.getExtendingTimeoutPeriod(), conf.getSavePeriod());
         this.loop.start();
 
         this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor, logger,

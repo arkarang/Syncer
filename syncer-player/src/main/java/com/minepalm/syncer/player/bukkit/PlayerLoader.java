@@ -92,9 +92,6 @@ public class PlayerLoader {
                         MySQLLogger.log(ex);
                     }
                 }
-                MySQLLogger.log(PlayerDataLog.apply(appliedData));
-            }else{
-                MySQLLogger.log(PlayerDataLog.applyNull(uuid));
             }
             removeCached(uuid);
             return true;
