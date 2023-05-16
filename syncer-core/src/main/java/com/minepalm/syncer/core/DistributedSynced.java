@@ -11,9 +11,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DistributedSynced<T> implements Synced<T> {
 
+    private static final AtomicInteger totalCount = new AtomicInteger(0);
 
     private static final long INFINITE = -1;
 

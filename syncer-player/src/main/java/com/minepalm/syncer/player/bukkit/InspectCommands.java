@@ -7,9 +7,11 @@ import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
+import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -33,6 +35,7 @@ public class InspectCommands extends BaseCommand {
     private final MySQLPlayerLogDatabase logDatabase;
 
     private final MySQLPlayerInventoryDataModel inventoryDatabase;
+    private final MySQLPlayerEnderChestDataModel enderChestModel;
     private final PlayerDataGUIFactory factory;
     private final SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd/hh:mm");
 
@@ -66,6 +69,33 @@ public class InspectCommands extends BaseCommand {
                 e.printStackTrace();
             } catch (ParseException e) {
                 player.sendMessage("올바르지 않은 시간 양식입니다. yyyy/MM/dd/hh:mm  예) 2022/07/25/01:30");
+            }
+        });
+
+    }
+    @Subcommand("ender")
+    public void openEnder(Player player, int index){
+        if(!map.containsKey(player.getUniqueId())){
+            player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
+            return;
+        }
+        List<PlayerDataLog> log = map.get(player.getUniqueId());
+
+        if(index < 0){
+            player.sendMessage("0 이상의 숫자를 입력해주세요.");
+            return;
+        }
+        if(index >= log.size()){
+            player.sendMessage(log.size()+" 미만의 이상의 숫자를 입력해주세요.");
+            return;
+        }
+
+        executor.async(()->{
+            try{
+                val gui = factory.buildEnderChest(log.get(index).uuid, log.get(index));
+                executor.sync(()-> gui.openGUI(player));
+            }catch (IOException e){
+                e.printStackTrace();
             }
         });
 
@@ -145,33 +175,6 @@ public class InspectCommands extends BaseCommand {
 
     }
 
-    @Subcommand("ender")
-    public void openEnder(Player player, int index){
-        if(!map.containsKey(player.getUniqueId())){
-            player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
-            return;
-        }
-        List<PlayerDataLog> log = map.get(player.getUniqueId());
-
-        if(index < 0){
-            player.sendMessage("0 이상의 숫자를 입력해주세요.");
-            return;
-        }
-        if(index >= log.size()){
-            player.sendMessage(log.size()+" 미만의 이상의 숫자를 입력해주세요.");
-            return;
-        }
-
-        executor.async(()->{
-            try{
-                factory.buildEnderChest(log.get(index).uuid, log.get(index)).openGUI(player);
-            }catch (IOException e){
-                e.printStackTrace();
-            }
-        });
-
-    }
-
     @Subcommand("range")
     public void page(Player player, int rangeMin, int rangeMax){
         if(!map.containsKey(player.getUniqueId())){
@@ -208,6 +211,23 @@ public class InspectCommands extends BaseCommand {
         executor.async(()->{
             try {
                 factory.modifyGUI(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get()).openGUI(player);
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Subcommand("modifyender")
+    public void modifyEnder(Player player, String username){
+        OfflinePlayer off = Bukkit.getOfflinePlayer(username);
+        if (off == null) {
+            player.sendMessage("해당 플레이어는 존재하지 않습니다.");
+            return;
+        }
+        executor.async(()->{
+            try {
+                val gui = factory.modifyEnderGUI(off.getUniqueId(), enderChestModel.load(off.getUniqueId()).get());
+                executor.sync(() -> {gui.openGUI(player);});
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }

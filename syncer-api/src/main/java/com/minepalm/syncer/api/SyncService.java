@@ -3,7 +3,6 @@ package com.minepalm.syncer.api;
 import java.util.concurrent.CompletableFuture;
 
 public interface SyncService {
-
     SyncPubSub getPubSub();
 
     HoldServerRegistry getHolderRegistry();

@@ -111,8 +111,10 @@ public class PlayerSyncer extends JavaPlugin {
 
         getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger()), new DuplicateFinder(this.getLogger(), logDatabase)));
         BukkitCommandManager commandManager = new BukkitCommandManager(this);
-        commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase, inventoryDataModel,
-                new PlayerDataGUIFactory(inventoryDataModel)));
+        commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase,
+                inventoryDataModel,
+                enderChestDataModel,
+                new PlayerDataGUIFactory(inventoryDataModel, enderChestDataModel)));
         ArkarangGUIListener.init();
     }
 

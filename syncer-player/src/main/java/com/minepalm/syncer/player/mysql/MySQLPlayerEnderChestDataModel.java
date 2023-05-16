@@ -30,7 +30,7 @@ public class MySQLPlayerEnderChestDataModel {
         });
     }
 
-    CompletableFuture<PlayerDataEnderChest> load(UUID uuid){
+    public CompletableFuture<PlayerDataEnderChest> load(UUID uuid){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("SELECT `data` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
             ps.setString(1, uuid.toString());
@@ -55,7 +55,7 @@ public class MySQLPlayerEnderChestDataModel {
         });
     }
 
-    CompletableFuture<Void> save(UUID uuid, PlayerDataEnderChest enderChest){
+    public CompletableFuture<Void> save(UUID uuid, PlayerDataEnderChest enderChest){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("INSERT INTO "+table+" (`uuid`, `data`) VALUES(?, ?) ON DUPLICATE KEY UPDATE `data`=VALUES(`data`)");
             ps.setString(1, uuid.toString());

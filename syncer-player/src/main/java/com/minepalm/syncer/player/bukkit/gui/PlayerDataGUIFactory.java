@@ -1,8 +1,10 @@
 package com.minepalm.syncer.player.bukkit.gui;
 
 import com.minepalm.arkarangutils.compress.CompressedInventorySerializer;
+import com.minepalm.syncer.player.bukkit.PlayerDataEnderChest;
 import com.minepalm.syncer.player.bukkit.PlayerDataInventory;
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
+import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.inventory.ItemStack;
@@ -14,6 +16,7 @@ import java.util.UUID;
 public class PlayerDataGUIFactory {
 
     private final MySQLPlayerInventoryDataModel database;
+    private final MySQLPlayerEnderChestDataModel enderChest;
 
     public PlayerDataGUI build(UUID uuid, PlayerDataInventory inventory){
         return new PlayerDataGUI(uuid, inventory.toArray());
@@ -32,6 +35,11 @@ public class PlayerDataGUIFactory {
     public PlayerDataModifyGUI modifyGUI(UUID uuid, PlayerDataInventory inventory){
         return new PlayerDataModifyGUI(uuid, inventory.toArray(), database );
     }
+
+    public PlayerEnderChestModifyGUI modifyEnderGUI(UUID uuid, PlayerDataEnderChest inventory){
+        return new PlayerEnderChestModifyGUI(uuid, inventory.toArray(), enderChest );
+    }
+
     public PlayerDataModifyGUI modifyGUI(UUID uuid, PlayerDataLog inventory) throws IOException {
         ItemStack[] items = CompressedInventorySerializer.itemStackArrayFromBase64(inventory.getInventoryData());
         return new PlayerDataModifyGUI(uuid, items, database);
