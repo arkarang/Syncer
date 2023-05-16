@@ -108,7 +108,6 @@ public class SyncTest {
         }, executor);
     }
 
-    @RequiredArgsConstructor
         private record BaseTimer(long baseTime) {
 
             long record() {

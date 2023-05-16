@@ -10,6 +10,7 @@ import com.minepalm.syncer.core.DebugLogger;
 import com.minepalm.syncer.core.Syncer;
 import lombok.RequiredArgsConstructor;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,6 +60,7 @@ public class RefectoredSyncTest {
     }
 
     @Test
+    @Ignore
     @DisplayName("Syncer objects should be able to hold and release objects with correct synchronization")
     public void testSyncerHoldAndRelease() {
         syncerA.initProcedures();

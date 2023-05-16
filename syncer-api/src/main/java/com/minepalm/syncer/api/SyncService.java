@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 public interface SyncService {
 
 
-    SyncerMode getMode();
-
     /**
      * 데이터 구독 및 발행을 관리하는 SyncPubSub 객체를 반환합니다.
      *

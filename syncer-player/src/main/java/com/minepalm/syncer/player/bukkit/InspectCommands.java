@@ -8,9 +8,11 @@ import co.aikar.commands.annotation.Subcommand;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.data.PlayerDataLog;
+import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -34,6 +36,7 @@ public class InspectCommands extends BaseCommand {
     private final MySQLPlayerLogDatabase logDatabase;
 
     private final MySQLPlayerInventoryDataModel inventoryDatabase;
+    private final MySQLPlayerEnderChestDataModel enderChestModel;
     private final PlayerDataGUIFactory factory;
     private final SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd/hh:mm");
 
@@ -91,7 +94,8 @@ public class InspectCommands extends BaseCommand {
 
         executor.async(()->{
             try{
-                factory.buildEnderChest(log.get(index).uuid, log.get(index)).openGUI(player);
+                val gui = factory.buildEnderChest(log.get(index).uuid, log.get(index));
+                executor.sync(()-> gui.openGUI(player));
             }catch (IOException e){
                 e.printStackTrace();
             }
@@ -216,7 +220,23 @@ public class InspectCommands extends BaseCommand {
             }
         });
     }
-    
+
+    @Subcommand("modifyender")
+    public void modifyEnder(Player player, String username){
+        OfflinePlayer off = Bukkit.getOfflinePlayer(username);
+        if (off == null) {
+            player.sendMessage("해당 플레이어는 존재하지 않습니다.");
+            return;
+        }
+        executor.async(()->{
+            try {
+                var gui = factory.modifyEnderGUI(off.getUniqueId(), enderChestModel.load(off.getUniqueId()).get());
+                executor.sync(() -> {gui.openGUI(player);});
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     @Subcommand("see")
     public void see(Player player, String username){

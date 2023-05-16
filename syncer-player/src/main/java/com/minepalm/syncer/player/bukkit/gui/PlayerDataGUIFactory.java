@@ -1,6 +1,7 @@
 package com.minepalm.syncer.player.bukkit.gui;
 
 import com.minepalm.library.bukkit.Inv;
+import com.minepalm.syncer.player.data.PlayerDataEnderChest;
 import com.minepalm.syncer.player.data.PlayerDataInventory;
 import com.minepalm.syncer.player.data.PlayerDataLog;
 import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
@@ -33,6 +34,10 @@ public class PlayerDataGUIFactory {
 
     public PlayerDataModifyGUI modifyGUI(UUID uuid, PlayerDataInventory inventory){
         return new PlayerDataModifyGUI(uuid, inventory.toArray(), database );
+    }
+
+    public PlayerEnderChestModifyGUI modifyEnderGUI(UUID uuid, PlayerDataEnderChest inventory){
+        return new PlayerEnderChestModifyGUI(uuid, inventory.toArray(), enderChest );
     }
 
     public PlayerDataModifyGUI modifyGUI(UUID uuid, PlayerDataLog inventory) throws IOException {

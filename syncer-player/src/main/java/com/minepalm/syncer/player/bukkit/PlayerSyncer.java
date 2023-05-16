@@ -100,8 +100,10 @@ public class PlayerSyncer extends JavaPlugin {
         Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 
         BukkitCommandManager commandManager = new BukkitCommandManager(this);
-        commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase, inventoryDataModel,
-                new PlayerDataGUIFactory(inventoryDataModel)));
+        commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase,
+                inventoryDataModel,
+                enderChestDataModel,
+                new PlayerDataGUIFactory(inventoryDataModel, enderChestDataModel)));
         ArkarangGUIListener.init();
     }
 
