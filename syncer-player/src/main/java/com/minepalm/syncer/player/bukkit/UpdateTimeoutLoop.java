@@ -101,7 +101,7 @@ public class UpdateTimeoutLoop {
                                         Bukkit.getLogger().severe(e.toString());
                                     }
                                 }));
-                                MySQLLogger.log(PlayerDataLog.saveLog(data), "AUTO");
+                                MySQLLogger.log(PlayerDataLog.saveLog(data), "autosave");
                             }
                         }
                     });

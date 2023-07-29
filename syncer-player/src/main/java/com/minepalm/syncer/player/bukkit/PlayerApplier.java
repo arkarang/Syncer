@@ -29,8 +29,7 @@ public class PlayerApplier {
             apply(player, data);
             return data;
         }catch (Throwable e){
-            MySQLLogger.log(e);
-            apply(player, extracted);
+            MySQLLogger.report(data, e, "inject failed");
             return extracted;
         }
     }
@@ -51,7 +50,7 @@ public class PlayerApplier {
                     logger.log(player.getName()+": try apply "+key);
                     strategy.applyPlayer(player, data);
                 } catch (Throwable e) {
-                    MySQLLogger.log(e);
+                    MySQLLogger.report(data, e, "apply failed at "+key+" strategy");
                 }
             }
         }

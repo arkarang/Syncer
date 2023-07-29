@@ -1,28 +1,34 @@
 package com.minepalm.syncer.player;
 
+import com.minepalm.syncer.bootstrap.SyncerBukkit;
+import com.minepalm.syncer.core.Syncer;
+import com.minepalm.syncer.player.bukkit.PlayerData;
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
-import com.minepalm.syncer.player.mysql.MySQLExceptionLogDatabase;
+import com.minepalm.syncer.player.mysql.MySQLErrorReportDatabase;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
 
+import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MySQLLogger {
 
-    private static MySQLExceptionLogDatabase exceptionLogDatabase;
     private static MySQLPlayerLogDatabase playerLogDatabase;
+    private static MySQLErrorReportDatabase reportdb;
     private static final Lock lock = new ReentrantLock();
 
-    public static void init(MySQLPlayerLogDatabase logdb, MySQLExceptionLogDatabase exdb){
+    public static void init(MySQLPlayerLogDatabase logdb,
+                            MySQLErrorReportDatabase reportz){
         synchronized (lock){
-            if(exceptionLogDatabase == null){
-                exceptionLogDatabase = exdb;
-                exceptionLogDatabase.init();
-            }
             if(playerLogDatabase == null){
                 playerLogDatabase = logdb;
                 playerLogDatabase.init();
+            }
+            if(reportdb == null){
+                reportdb = reportz;
+                reportdb.init();
             }
         }
     }
@@ -43,9 +49,25 @@ public class MySQLLogger {
         }
     }
 
-    public static void log(Throwable ex){
-        if(exceptionLogDatabase != null){
-            exceptionLogDatabase.log(ex, System.currentTimeMillis());
+    public static void report(PlayerData data, Throwable ex, String description){
+        if(reportdb != null){
+            String currentServer = SyncerBukkit.inst().getHolderRegistry().getLocalName();
+            long now = System.currentTimeMillis();
+            Date date = new Date();
+            //if(data != null) {
+                ErrorReport report = new ErrorReport(data.getUuid(), currentServer, data, description, ex, now);
+                reportdb.log(report).join();
+                playerLogDatabase.log(PlayerDataLog.dump("DUMP", data), report.uuid + "_" + currentServer + "_" + date);
+            //}
+        }
+    }
+
+    public static void report(UUID uuid, Throwable ex, String description){
+        if(reportdb != null) {
+            String currentServer = SyncerBukkit.inst().getHolderRegistry().getLocalName();
+            long now = System.currentTimeMillis();
+            ErrorReport report = new ErrorReport(uuid, currentServer, null, description, ex, now);
+            reportdb.log(report);
         }
     }
 

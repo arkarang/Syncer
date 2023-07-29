@@ -24,14 +24,13 @@ public class PlayerDataController {
         val enderChest = enderChestDataModel.load(uuid);
 
         return CompletableFuture.allOf(inventory, values, enderChest).thenApply(ignored -> {
-            Bukkit.getLogger().severe("load current-thread-name: "+Thread.currentThread().getName());
             try {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
                 PlayerDataEnderChest enderChestData = enderChest.get();
                 return new PlayerData(uuid, data, inv, enderChestData);
             }catch (InterruptedException | ExecutionException e){
-                MySQLLogger.log(e);
+                MySQLLogger.report(uuid, e, "PlayerDataController load failed");
                 return null;
             }
         });

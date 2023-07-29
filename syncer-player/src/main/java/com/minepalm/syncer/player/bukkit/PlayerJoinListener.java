@@ -1,11 +1,9 @@
 package com.minepalm.syncer.player.bukkit;
 
-import com.destroystokyo.paper.event.player.PlayerInitialSpawnEvent;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
-import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
+import org.bukkit.BanList;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
@@ -16,7 +14,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -33,28 +33,32 @@ public class PlayerJoinListener implements Listener {
     private final UpdateTimeoutLoop loop;
 
     private final AtomicBoolean allowed = new AtomicBoolean(false);
-    private final Map<UUID, Boolean> eventPassed = new ConcurrentHashMap<>();
+
+
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void asyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) throws ExecutionException, InterruptedException {
-
-        if(!allowed.get()){
-            event.setKickMessage(conf.getIllegalAccessText());
-            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
-            return;
-        }
-
+        event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
         OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
 
         if(player != null && player.isBanned()){
+            String reason = Bukkit.getBanList(BanList.Type.NAME).getBanEntry(player.getName()).getReason();
+            event.setKickMessage(reason);
             return;
         }
 
-        eventPassed.remove(event.getUniqueId());
+        if(Bukkit.hasWhitelist() && player != null && !player.isWhitelisted()){
+            event.setKickMessage(conf.getWhitelistText());
+            return;
+        }
+
+        event.setKickMessage(conf.getIllegalAccessText());
 
         if(!event.isAsynchronous()){
-            event.setKickMessage(conf.getIllegalAccessText());
-            event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+            return;
+        }
+
+        if(!allowed.get()){
             return;
         }
 
@@ -64,16 +68,14 @@ public class PlayerJoinListener implements Listener {
         if(completed.equals(LoadResult.SUCCESS)) {
             loader.unmark(uuid);
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.ALLOWED);
-            eventPassed.put(uuid, true);
         }else if(completed.equals(LoadResult.TIMEOUT)){
             event.setKickMessage(conf.getTimeoutText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoinEvent(PlayerJoinEvent event){
-
         boolean completed = loader.apply(event.getPlayer());
         loop.join(event.getPlayer().getUniqueId());
 
@@ -85,24 +87,19 @@ public class PlayerJoinListener implements Listener {
             MySQLLogger.log(PlayerDataLog.joinLog(applier.extract(event.getPlayer())));
         });
     }
+
     @EventHandler
     public void playerQuit(PlayerQuitEvent event) {
-        loader.saveRuntime(event.getPlayer(), "QUIT");
+        UUID uuid = event.getPlayer().getUniqueId();
+        PlayerData data = applier.extract(event.getPlayer());
+
+        loader.saveAsync(uuid, data, "QUIT");
         loop.quit(event.getPlayer().getUniqueId());
+
         executor.async(() -> {
-            MySQLLogger.log(PlayerDataLog.quitLog(applier.extract(event.getPlayer())));
+            MySQLLogger.log(PlayerDataLog.quitLog(data));
         });
 
-    }
-
-
-    @EventHandler
-    public void playerKick(PlayerKickEvent event) {
-        loader.saveRuntime(event.getPlayer(), "KICK");
-        loop.quit(event.getPlayer().getUniqueId());
-        executor.async(()->{
-            MySQLLogger.log(PlayerDataLog.kickLog(applier.extract(event.getPlayer())));
-        });
     }
 
     public void setAllow(){

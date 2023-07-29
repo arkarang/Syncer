@@ -7,6 +7,7 @@ import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.core.hellobungee.entity.SyncReleasedLock;
 import com.minepalm.syncer.core.hellobungee.entity.SyncSubscription;
 import lombok.RequiredArgsConstructor;
+import lombok.var;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +26,8 @@ public class HelloBungeeHoldServer implements HoldServer {
 
     @Override
     public CompletableFuture<Boolean> sendSubscribeWaiting(Synced<?> synced) {
-        return sender.callback(new SyncSubscription.SyncSubRequest(registry.getLocalName(), synced.getObjectKey()), SyncSubscription.SyncSubResult.class)
+        var request = new SyncSubscription.SyncSubRequest(registry.getLocalName(), synced.getObjectKey());
+        return sender.callback(request, SyncSubscription.SyncSubResult.class)
                 .async()
                 .thenApplyAsync(SyncSubscription.SyncSubResult::isAccepted, executor);
     }

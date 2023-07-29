@@ -1,6 +1,5 @@
 package com.minepalm.syncer.core.mysql;
 
-import com.minepalm.syncer.core.HoldData;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
 
@@ -201,38 +200,15 @@ public class MySQLSyncStatusDatabase {
         });
     }
 
-    CompletableFuture<HoldData> getData(String objectId){
-        return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("SELECT `server`, `timeout` FROM syncer_status WHERE `objectId`=? FOR UPDATE");
-            ps.setString(1, objectId);
-            ResultSet rs = ps.executeQuery();
-            if(rs.next()){
-                String server = rs.getString(1);
-                long time = rs.getLong(2);
-                return new HoldData(objectId, server, time);
-            }else {
-                return null;
-            }
-        });
-    }
-
-    /*
-    * 1. SELECT로 정보 조회
-    * 2. holdData 랑 대조
-    * 3. 같으면 -> true
-    * 4. 없으면 -> true / hold 데이터 INSERT
-    * 5. timeout 이면 -> true / hold 데이터 INSERT
-    * 6. 다르면 -> false
-    * */
-    CompletableFuture<Boolean> hold(String objectId, HoldData data, long timeoutMills){
+    CompletableFuture<Boolean> hold(String objectId, String server, long currentTime, long holdingDuration){
         return database.executeAsync(connection -> {
             try {
                 connection.setAutoCommit(false);
                 PreparedStatement ps2 = connection.prepareStatement("CALL `updateHold`(?, ?, ?, ?)");
                 ps2.setString(1, objectId);
-                ps2.setString(2, data.getServer());
-                ps2.setLong(3, data.getTime());
-                ps2.setLong(4, timeoutMills);
+                ps2.setString(2, server);
+                ps2.setLong(3, currentTime);
+                ps2.setLong(4, holdingDuration);
                 ResultSet rs = ps2.executeQuery();
                 connection.commit();
                 if(rs.next()){
@@ -249,7 +225,7 @@ public class MySQLSyncStatusDatabase {
         });
     }
 
-    CompletableFuture<Void> holdUnsafe(String objectId, HoldData data){
+    CompletableFuture<Void> holdUnsafe(String objectId, String server, long time){
         return database.executeAsync(connection -> {
             try {
                 connection.setAutoCommit(false);
@@ -260,8 +236,8 @@ public class MySQLSyncStatusDatabase {
                         "`server`=VALUES(`server`), " +
                         "`timeout`=VALUES(`timeout`);");
                 ps2.setString(1, objectId);
-                ps2.setString(2, data.getServer());
-                ps2.setLong(3, data.getTime());
+                ps2.setString(2, server);
+                ps2.setLong(3, time);
                 ps2.execute();
                 connection.commit();
             }finally {
@@ -271,14 +247,14 @@ public class MySQLSyncStatusDatabase {
         });
     }
 
-    CompletableFuture<Boolean> release(String objectId, HoldData data){
+    CompletableFuture<Boolean> release(String objectId, String server, long time){
         return database.executeAsync(connection -> {
             try {
                 connection.setAutoCommit(false);
                 PreparedStatement ps2 = connection.prepareStatement("CALL `releaseHold`(?, ?, ?)");
                 ps2.setString(1, objectId);
-                ps2.setString(2, data.getServer());
-                ps2.setLong(3, data.getTime());
+                ps2.setString(2, server);
+                ps2.setLong(3, time);
                 ResultSet rs = ps2.executeQuery();
                 connection.commit();
                 if(rs.next()){
@@ -301,15 +277,15 @@ public class MySQLSyncStatusDatabase {
         });
     }
 
-    CompletableFuture<Boolean> updateTimeout(String objectId, HoldData data){
+    CompletableFuture<Boolean> updateTimeout(String objectId, String server, long time){
         return database.executeAsync(connection -> {
             try {
                 connection.setAutoCommit(false);
                 PreparedStatement ps2 = connection.prepareStatement("CALL `addTimeout`(?, ?, ?, ?)");
                 ps2.setString(1, objectId);
-                ps2.setString(2, data.getServer());
+                ps2.setString(2, server);
                 ps2.setLong(3, System.currentTimeMillis());
-                ps2.setLong(4, data.getTime());
+                ps2.setLong(4, time);
                 ResultSet rs = ps2.executeQuery();
                 connection.commit();
                 if(rs.next()){
@@ -319,6 +295,41 @@ public class MySQLSyncStatusDatabase {
                 }
             }finally {
                 connection.setAutoCommit(true);
+            }
+        });
+    }
+
+    CompletableFuture<Boolean> setTimeout(String objectId, String server, long time) {
+        return database.executeAsync(connection -> {
+            try {
+                connection.setAutoCommit(false);
+                PreparedStatement ps2 = connection.prepareStatement("INSERT INTO syncer_status "+
+                        "(`objectId`, `server`, `timeout`) " +
+                        "VALUES(?, ?, ?)" +
+                        "ON DUPLICATE KEY UPDATE " +
+                        "`server`=VALUES(`server`), " +
+                        "`timeout`=VALUES(`timeout`);");
+                ps2.setString(1, objectId);
+                ps2.setString(2, server);
+                ps2.setLong(3, time);
+                connection.commit();
+            }finally {
+                connection.setAutoCommit(true);
+            }
+            return null;
+        }).thenCompose(ignore -> equals(objectId, server, time));
+    }
+
+    CompletableFuture<Boolean> equals(String objectId, String server, long time){
+        return database.executeAsync(connection -> {
+            PreparedStatement ps = connection.prepareStatement("SELECT `timeout` FROM syncer_status WHERE `objectId`=? AND `server`=?");
+            ps.setString(1, objectId);
+            ps.setString(2, server);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                return rs.getLong(1) == time;
+            }else{
+                return false;
             }
         });
     }

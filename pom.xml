@@ -19,7 +19,7 @@
     <repositories>
         <repository>
             <id>minepalm-repo</id>
-            <url>https://nexus.minepalm.com/repository/maven-snapshots/</url>
+            <url>https://repo.minepalm.com/repository/maven-snapshots/</url>
         </repository>
     </repositories>
 

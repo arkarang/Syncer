@@ -64,6 +64,11 @@ public class PlayerDataLog {
         return toLog(data, taskName);
     }
 
+    public static PlayerDataLog dump(String reason, PlayerData data){
+        return toLog(data, reason);
+    }
+
+
     public static PlayerDataLog applyNull(UUID uuid){
         return nullLog(uuid, "APPLY_NULL");
     }

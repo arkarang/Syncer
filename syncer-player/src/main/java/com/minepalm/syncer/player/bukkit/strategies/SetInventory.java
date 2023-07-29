@@ -2,7 +2,9 @@ package com.minepalm.syncer.player.bukkit.strategies;
 
 import com.minepalm.syncer.player.bukkit.PlayerData;
 import lombok.RequiredArgsConstructor;
+import net.minecraft.server.v1_12_R1.EntityPlayer;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -15,6 +17,7 @@ public class SetInventory implements ApplyStrategy {
     private final Logger logger;
     @Override
     public void applyPlayer(Player player, PlayerData data) {
+
         if(data.getInventory() == null){
             logger.warning("player "+player.getName()+"("+player.getUniqueId()+") inventory is null");
             return;

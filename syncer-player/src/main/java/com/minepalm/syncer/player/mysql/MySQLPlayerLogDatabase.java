@@ -1,5 +1,6 @@
 package com.minepalm.syncer.player.mysql;
 
+import com.minepalm.arkarangutils.bukkit.Pair;
 import com.minepalm.syncer.player.bukkit.PlayerDataLog;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import lombok.RequiredArgsConstructor;
@@ -58,14 +59,14 @@ public class MySQLPlayerLogDatabase {
         return log(log, "");
     }
 
-    public CompletableFuture<List<PlayerDataLog>> select(UUID uuid, long range){
+    public CompletableFuture<List<Pair<PlayerDataLog, String>>> select(UUID uuid, long range){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
                     "`description` FROM "+table+" WHERE `uuid`=? AND `time` > ? ORDER BY `time`");
             ps.setString(1, uuid.toString());
             ps.setLong(2, range);
             ResultSet rs = ps.executeQuery();
-            List<PlayerDataLog> list = new ArrayList<>();
+            List<Pair<PlayerDataLog, String>> list = new ArrayList<>();
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
@@ -74,13 +75,13 @@ public class MySQLPlayerLogDatabase {
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
-                list.add(log);
+                list.add(new Pair<>(log, desc));
             }
             return list;
         });
     }
 
-    public CompletableFuture<List<PlayerDataLog>> select(UUID uuid, long range, long rangeMax){
+    public CompletableFuture<List<Pair<PlayerDataLog, String>>> select(UUID uuid, long range, long rangeMax){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
                     "`description` FROM "+table+" WHERE `uuid`=? AND `time` > ? AND `time` <= ? ORDER BY `time`");
@@ -88,7 +89,7 @@ public class MySQLPlayerLogDatabase {
             ps.setLong(2, range);
             ps.setLong(3, rangeMax);
             ResultSet rs = ps.executeQuery();
-            List<PlayerDataLog> list = new ArrayList<>();
+            List<Pair<PlayerDataLog, String>> list = new ArrayList<>();
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
@@ -97,13 +98,13 @@ public class MySQLPlayerLogDatabase {
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
-                list.add(log);
+                list.add(new Pair<>(log, desc));
             }
             return list;
         });
     }
 
-    public CompletableFuture<List<PlayerDataLog>> selectType(UUID uuid, String type, long range, long rangeMax){
+    public CompletableFuture<List<Pair<PlayerDataLog, String>>> selectType(UUID uuid, String type, long range, long rangeMax){
         return database.executeAsync(connection -> {
             PreparedStatement ps = connection.prepareStatement("" +
                     "SELECT `time`, `task_id`, `inventory_data`, `enderchest_data`, `data_generated_time`, " +
@@ -113,7 +114,7 @@ public class MySQLPlayerLogDatabase {
             ps.setLong(3, rangeMax);
             ps.setString(4, type);
             ResultSet rs = ps.executeQuery();
-            List<PlayerDataLog> list = new ArrayList<>();
+            List<Pair<PlayerDataLog, String>> list = new ArrayList<>();
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
@@ -122,7 +123,7 @@ public class MySQLPlayerLogDatabase {
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
-                list.add(log);
+                list.add(new Pair<>(log, desc));
             }
             return list;
         });

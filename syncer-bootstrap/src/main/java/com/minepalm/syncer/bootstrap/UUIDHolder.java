@@ -1,11 +1,15 @@
 package com.minepalm.syncer.bootstrap;
 
+import com.minepalm.syncer.api.SyncToken;
 import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
-@RequiredArgsConstructor
-public class UUIDHolder {
+public class UUIDHolder implements SyncToken<UUID> {
 
-    public final UUID uuid;
+
+    @Override
+    public String getObjectId(UUID uuid) {
+        return uuid.toString();
+    }
 }

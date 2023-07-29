@@ -6,6 +6,7 @@ import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Subcommand;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
+import com.minepalm.arkarangutils.bukkit.Pair;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @CommandPermission("rendog.admin")
@@ -39,7 +41,7 @@ public class InspectCommands extends BaseCommand {
     private final PlayerDataGUIFactory factory;
     private final SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd/hh:mm");
 
-    private final Map<UUID, List<PlayerDataLog>> map = new ConcurrentHashMap<>();
+    private final Map<UUID, List<Pair<PlayerDataLog, String>>> map = new ConcurrentHashMap<>();
 
     private final SimpleDateFormat logFormat = new SimpleDateFormat("yyyy/MM/dd/hh:mm:ss");
 
@@ -55,14 +57,14 @@ public class InspectCommands extends BaseCommand {
                     return;
                 }
                 if (rangeMax.equals("none")) {
-                    List<PlayerDataLog> list = logDatabase.select(off.getUniqueId(), date.toInstant().toEpochMilli()).get();
+                    List<Pair<PlayerDataLog, String>> list = logDatabase.select(off.getUniqueId(), date.toInstant().toEpochMilli()).get();
                     map.put(player.getUniqueId(), list);
                     cacheAndPrint(player, list);
                 } else {
                     Date dateMax = format.parse(rangeMax);
                     long min = date.toInstant().toEpochMilli();
                     long max = dateMax.toInstant().toEpochMilli();
-                    List<PlayerDataLog> list = logDatabase.select(off.getUniqueId(), min, max).get();
+                    List<Pair<PlayerDataLog, String>> list = logDatabase.select(off.getUniqueId(), min, max).get();
                     cacheAndPrint(player, list);
                 }
             } catch (InterruptedException | ExecutionException e) {
@@ -79,7 +81,7 @@ public class InspectCommands extends BaseCommand {
             player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
             return;
         }
-        List<PlayerDataLog> log = map.get(player.getUniqueId());
+        List<Pair<PlayerDataLog, String>> log = map.get(player.getUniqueId());
 
         if(index < 0){
             player.sendMessage("0 이상의 숫자를 입력해주세요.");
@@ -92,7 +94,7 @@ public class InspectCommands extends BaseCommand {
 
         executor.async(()->{
             try{
-                val gui = factory.buildEnderChest(log.get(index).uuid, log.get(index));
+                val gui = factory.buildEnderChest(log.get(index).getKey().uuid, log.get(index).getKey());
                 executor.sync(()-> gui.openGUI(player));
             }catch (IOException e){
                 e.printStackTrace();
@@ -101,19 +103,19 @@ public class InspectCommands extends BaseCommand {
 
     }
 
-    private void cacheAndPrint(Player player, List<PlayerDataLog> list){
+    private void cacheAndPrint(Player player, List<Pair<PlayerDataLog, String>> list){
         map.put(player.getUniqueId(), list);
         int count = 0;
-        for (PlayerDataLog log : list) {
-            TextComponent chat = print(count, log);
+        for (Pair<PlayerDataLog, String> log : list) {
+            TextComponent chat = print(count, log.getKey(), log.getValue());
             player.sendMessage(chat);
             count++;
         }
     }
 
-    private TextComponent print(int count, PlayerDataLog log){
+    private TextComponent print(int count, PlayerDataLog log, String desc){
         TextComponent chat = new TextComponent();
-        chat.setText(count+". "+log.task_name+" | "+logFormat.format(log.log_generated_time)+" | "+logFormat.format(log.data_generated_time));
+        chat.setText(count+". "+log.task_name+" | "+logFormat.format(log.log_generated_time)+" | "+logFormat.format(log.data_generated_time)+ " | "+desc);
         chat.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/inva open "+count));
         chat.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§f클릭시 당시 인벤토리를 봅니다.")}));
         return chat;
@@ -130,14 +132,14 @@ public class InspectCommands extends BaseCommand {
                     return;
                 }
                 if (rangeMax.equals("none")) {
-                    List<PlayerDataLog> list = logDatabase.selectType(off.getUniqueId(), type, date.toInstant().toEpochMilli(), System.currentTimeMillis()).get();
+                    List<Pair<PlayerDataLog, String>> list = logDatabase.selectType(off.getUniqueId(), type, date.toInstant().toEpochMilli(), System.currentTimeMillis()).get();
                     map.put(player.getUniqueId(), list);
                     cacheAndPrint(player, list);
                 } else {
                     Date dateMax = format.parse(rangeMax);
                     long min = date.toInstant().toEpochMilli();
                     long max = dateMax.toInstant().toEpochMilli();
-                    List<PlayerDataLog> list = logDatabase.selectType(off.getUniqueId(), type, min, max).get();
+                    List<Pair<PlayerDataLog, String>> list = logDatabase.selectType(off.getUniqueId(), type, min, max).get();
                     cacheAndPrint(player, list);
                 }
             } catch (InterruptedException | ExecutionException e) {
@@ -154,7 +156,7 @@ public class InspectCommands extends BaseCommand {
             player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
             return;
         }
-        List<PlayerDataLog> log = map.get(player.getUniqueId());
+        List<Pair<PlayerDataLog, String>> log = map.get(player.getUniqueId());
 
         if(index < 0){
             player.sendMessage("0 이상의 숫자를 입력해주세요.");
@@ -167,7 +169,7 @@ public class InspectCommands extends BaseCommand {
 
         executor.async(()->{
             try{
-                factory.build(log.get(index).uuid, log.get(index)).openGUI(player);
+                factory.build(log.get(index).getKey().uuid, log.get(index).getKey()).openGUI(player);
             }catch (IOException e){
                 e.printStackTrace();
             }
@@ -182,7 +184,7 @@ public class InspectCommands extends BaseCommand {
             return;
         }
 
-        List<PlayerDataLog> list = map.get(player.getUniqueId());
+        List<Pair<PlayerDataLog, String>> list = map.get(player.getUniqueId());
         int max = Math.max(rangeMax, rangeMin);
         int min = Math.min(rangeMax, rangeMin);
 
@@ -196,8 +198,7 @@ public class InspectCommands extends BaseCommand {
         }
 
         for(int i = min ; i < max && i < list.size() ; i++){
-            PlayerDataLog log = list.get(i);
-            player.sendMessage(print(i, log    ));
+            player.sendMessage(print(i, list.get(i).getKey(), list.get(i).getValue()));
         }
     }
 
@@ -256,23 +257,23 @@ public class InspectCommands extends BaseCommand {
             player.sendMessage("검색을 하지 않았습니다. 검색 하고 나서 사용해주세요.");
             return;
         }
-        List<PlayerDataLog> list = map.get(player.getUniqueId());
+        List<Pair<PlayerDataLog, String>> list = map.get(player.getUniqueId());
         executor.async(()->{
             List<PlayerDataLog> merged = new ArrayList<>();
             PlayerDataLog log = null;
             for(int i = 0; i < list.size(); i++){
                 if(log == null) {
-                    log = list.get(i);
+                    log = list.get(i).getKey();
                     merged.add(log);
                     continue;
                 }
-                PlayerDataLog target = list.get(i);
+                PlayerDataLog target = list.get(i).getKey();
                 if(!log.inventoryData.equals(target.inventoryData)){
                     merged.add(target);
                     log = target;
                 }
             }
-            map.put(player.getUniqueId(), merged);
+            map.put(player.getUniqueId(), merged.stream().map(pair -> new Pair<>(pair, "")).collect(Collectors.toList()));
             player.sendMessage("중복된 인벤토리를 줄여서 "+merged.size()+"개로 압축했습니다.");
         });
 

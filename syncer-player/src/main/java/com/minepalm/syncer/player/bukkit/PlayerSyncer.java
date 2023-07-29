@@ -45,11 +45,6 @@ public class PlayerSyncer extends JavaPlugin {
     PlayerApplier modifier;
     @Getter
     PlayerLoader loader;
-
-    //TransactionLoop transactionLoop;
-
-    //PlayerTransactionManager manager;
-
     @Override
     public void onEnable() {
         inst = this;
@@ -73,12 +68,6 @@ public class PlayerSyncer extends JavaPlugin {
         valuesDataModel.init();
 
         this.modifier = initialize(new PlayerApplier(logger));
-        //transactionLoop = new TransactionLoop(
-        //        Executors.newSingleThreadExecutor(), Executors.newFixedThreadPool(4), 50);
-        //transactionLoop.start();
-        //manager = new PlayerTransactionManager(transactionLoop);
-        //manager = new PlayerTransactionManager(Executors.newSingleThreadExecutor(), Executors.newCachedThreadPool(), 50L);
-        //manager.start();
         this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
                 conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
@@ -102,7 +91,7 @@ public class PlayerSyncer extends JavaPlugin {
         });
 
         MySQLPlayerLogDatabase playerLogDatabase = new MySQLPlayerLogDatabase("playersyncer_logs", logDatabase);
-        MySQLExceptionLogDatabase exceptionLogDatabase = new MySQLExceptionLogDatabase("playersyncer_excepitons", logDatabase);
+        MySQLErrorReportDatabase exceptionLogDatabase = new MySQLErrorReportDatabase("playersyncer_error_reports", logDatabase);
         MySQLLogger.init(playerLogDatabase, exceptionLogDatabase);
 
         MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*1);

@@ -21,6 +21,8 @@ public interface Synced<T> {
 
     CompletableFuture<Boolean> updateTimeout(long timeToAdd);
 
+    CompletableFuture<Boolean> setTimeout(long time);
+
     //CompletableFuture<Boolean> transferHold(SyncHolder holder);
 
     void hold(Duration duration) throws ExecutionException, InterruptedException;
@@ -32,9 +34,11 @@ public interface Synced<T> {
 
     interface Unsafe{
 
-        void hold() throws ExecutionException, InterruptedException;
+        void hold();
 
-        void release() throws ExecutionException, InterruptedException;
+        void release();
+
+        void set(long time);
 
     }
 

@@ -6,10 +6,14 @@ import com.minepalm.hellobungee.bungee.HelloBungee;
 import com.minepalm.syncer.core.Syncer;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import kr.travelrpg.travellibrary.bungee.TravelLibraryBungee;
+import net.md_5.bungee.api.ProxyServer;
+import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 import net.md_5.bungee.api.event.ServerDisconnectEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
+
+import java.util.UUID;
 
 public class SyncerBungee extends Plugin implements Listener {
 
@@ -26,10 +30,12 @@ public class SyncerBungee extends Plugin implements Listener {
         HelloEveryone network = HelloBungee.getMain();
 
         syncer = new Syncer(database, network);
+        syncer.register(UUID.class, new UUIDHolder());
 
         if(conf.requiredInitialization()) {
             syncer.initProcedures();
         }
+        ProxyServer.getInstance().getPluginManager().registerListener(this, this);
     }
 
     @Override
@@ -38,9 +44,12 @@ public class SyncerBungee extends Plugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerDisconnected(ServerDisconnectEvent event){
-        syncer.getHolderRegistry().getHolder(event.getPlayer().getUniqueId().toString());
-
+    public void onPlayerDisconnected(PlayerDisconnectEvent event){
+        try {
+            syncer.of(event.getPlayer().getUniqueId()).unsafe().release();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     protected static class BungeeConf extends BungeeConfig implements IConf{

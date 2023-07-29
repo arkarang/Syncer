@@ -1,6 +1,5 @@
 package com.minepalm.syncer.core.mysql;
 
-import com.minepalm.syncer.core.HoldData;
 import lombok.RequiredArgsConstructor;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,39 +20,44 @@ public class MySQLSyncedController {
         return database.isHeldServer(currentServer, objectId);
     }
 
-    public CompletableFuture<Boolean> tryHoldAsync(HoldData data, long timeout){
-        return database.hold(objectId, data, timeout);
+    public CompletableFuture<Boolean> tryHoldAsync(long holdingDuration){
+        long currentTime = System.currentTimeMillis();
+        return database.hold(objectId, currentServer, currentTime, holdingDuration);
     }
 
-    public boolean tryHold(HoldData data, long timeout) throws ExecutionException, InterruptedException {
-        return database.hold(objectId, data, timeout).get();
+    public boolean tryHold(long holdingDuration) {
+        return tryHoldAsync(holdingDuration).join();
     }
 
-    public void holdUnsafe(HoldData data) throws ExecutionException, InterruptedException {
-        database.holdUnsafe(objectId, data).get();
+    public void holdUnsafe(long time) {
+        database.holdUnsafe(objectId, currentServer, time).join();
     }
 
-    public CompletableFuture<Void> holdUnsafeAsync(HoldData data){
-        return database.holdUnsafe(objectId, data);
+    public CompletableFuture<Void> holdUnsafeAsync(long time){
+        return database.holdUnsafe(objectId, currentServer, time);
     }
 
-    public CompletableFuture<Boolean> releaseAsync(HoldData data){
-        return database.release(objectId, data);
+    public CompletableFuture<Boolean> releaseAsync(long time){
+        return database.release(objectId, currentServer, time);
     }
 
-    public boolean release(HoldData data) throws ExecutionException, InterruptedException {
-        return database.release(objectId, data).get();
+    public boolean release(long time) {
+        return database.release(objectId, currentServer, time).join();
     }
 
     public CompletableFuture<Void> releaseUnsafeAsync(){
         return database.releaseUnsafe(objectId);
     }
 
-    public void releaseUnsafe() throws ExecutionException, InterruptedException {
-        database.releaseUnsafe(objectId).get();
+    public void releaseUnsafe() {
+        database.releaseUnsafe(objectId).join();
     }
 
-    public CompletableFuture<Boolean> updateTimeout(HoldData data){
-        return database.updateTimeout(objectId, data);
+    public CompletableFuture<Boolean> setTimeout(long time){
+        return database.setTimeout(objectId, currentServer, time);
+    }
+
+    public CompletableFuture<Boolean> updateTimeout(long time){
+        return database.updateTimeout(objectId, currentServer , time);
     }
 }

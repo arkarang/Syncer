@@ -1,10 +1,8 @@
 package com.minepalm.syncer.player.bukkit.gui;
 
 import com.minepalm.arkarangutils.bukkit.ArkarangGUI;
-import com.minepalm.syncer.player.data.PlayerDataEnderChest;
-import com.minepalm.syncer.player.data.PlayerDataInventory;
+import com.minepalm.syncer.player.bukkit.PlayerDataEnderChest;
 import com.minepalm.syncer.player.mysql.MySQLPlayerEnderChestDataModel;
-import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
