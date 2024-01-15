@@ -35,9 +35,29 @@ public class PlayerJoinListener implements Listener {
     private final AtomicBoolean allowed = new AtomicBoolean(false);
 
 
+    private void makeDelayForTest(long time) {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private UUID arkarang = UUID.fromString("7ce52d57-8ac3-4daa-b9a1-5c3c0f8aadf4");
+    private void testCode(UUID uuid) {
+        if(uuid.equals(arkarang)) {
+            String currentServer = PlayerSyncer.getInst().syncer.getHolderRegistry().getLocalName();
+            if(currentServer.equalsIgnoreCase("RPG-dungeon1-4")) {
+                makeDelayForTest(10000);
+            } else if ( currentServer.equalsIgnoreCase("RPG-dungeon1-5")) {
+                makeDelayForTest(5000);
+            }
+        }
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void asyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) throws ExecutionException, InterruptedException {
+        //testCode(event.getUniqueId());
         event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
         OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
 

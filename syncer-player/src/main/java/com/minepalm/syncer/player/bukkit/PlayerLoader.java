@@ -48,8 +48,8 @@ public class PlayerLoader {
     public LoadResult load(UUID uuid) throws ExecutionException, InterruptedException{
         PlayerData data = null;
         try {
-            hold(uuid);
-
+            //TODO: delete
+            //hold(uuid);
 
             data = storage.getPlayerData(uuid).join();
 
@@ -139,15 +139,6 @@ public class PlayerLoader {
         }
     }
 
-    public void saveSync(UUID uuid, PlayerData data, String reason) {
-        hold(uuid);
-        try {
-            save(uuid, data, reason);
-        } finally {
-            release(uuid);
-        }
-    }
-
     public void save(UUID uuid, PlayerData data, String description) {
         try {
             removeCached(uuid);
@@ -162,7 +153,8 @@ public class PlayerLoader {
             }
 
             CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(30000L, TimeUnit.MILLISECONDS);
-            release(uuid);
+            //TODO: delete
+            //release(uuid);
             markPass(uuid);
         } catch (TimeoutException e) {
             MySQLLogger.report(data, e, "save timeout");
