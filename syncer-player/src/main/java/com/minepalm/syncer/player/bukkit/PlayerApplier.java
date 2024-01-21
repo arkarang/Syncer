@@ -3,11 +3,18 @@ package com.minepalm.syncer.player.bukkit;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.ApplyStrategy;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.InventoryView;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 public class PlayerApplier {
@@ -68,8 +75,39 @@ public class PlayerApplier {
         boolean isFly = gamemode == 1 || player.isFlying();
         double healthScale = player.getHealthScale();
         PlayerDataValues values = new PlayerDataValues(health, healthScale, level, foodLevel, exp, saturation, exhaustion, heldSlot, gamemode, isFly);
+        if(!Bukkit.isPrimaryThread()) {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(PlayerSyncer.getInst(), () -> {
+                closeInventory(player);
+                future.complete(null);
+            });
+            try {
+                future.get(100L, TimeUnit.MILLISECONDS);
+            }catch (Throwable ignored){
+            }
+        } else {
+            closeInventory(player);
+        }
+
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
         PlayerDataEnderChest enderChest = PlayerDataEnderChest.of(player.getEnderChest());
         return new PlayerData(player.getUniqueId(), values, inventory, enderChest);
+    }
+
+    private void closeInventory(Player player){
+        try {
+            if (player.getOpenInventory() != null) {
+                InventoryView view = player.getOpenInventory();
+                ItemStack item = view.getCursor();
+                if (item != null && item.getType() != Material.AIR) {
+                    Map<Integer, ItemStack> leftover = view.getTopInventory().addItem(item);
+                    if (leftover.size() > 0) {
+                        leftover.values().forEach(leftoverItem -> view.getBottomInventory().addItem(leftoverItem));
+                    }
+                }
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 }
