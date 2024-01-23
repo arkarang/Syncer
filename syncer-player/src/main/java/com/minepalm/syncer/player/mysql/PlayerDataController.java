@@ -18,19 +18,24 @@ public class PlayerDataController {
     private final MySQLPlayerValuesDataModel valuesDataModel;
     private final MySQLPlayerEnderChestDataModel enderChestDataModel;
 
+    private final MySQLPlayerPotionDatabase potionDatabase;
+
     public CompletableFuture<PlayerData> load(){
         val inventory = inventoryDataModel.load(uuid);
         val values = valuesDataModel.load(uuid);
         val enderChest = enderChestDataModel.load(uuid);
+        val potion = potionDatabase.load(uuid);
 
-        return CompletableFuture.allOf(inventory, values, enderChest).thenApply(ignored -> {
+        return CompletableFuture.allOf(inventory, values, enderChest, potion).thenApply(ignored -> {
             try {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
                 PlayerDataEnderChest enderChestData = enderChest.get();
-                return new PlayerData(uuid, data, inv, enderChestData);
+                PlayerDataPotion potionData = potion.get();
+
+                return new PlayerData(uuid, data, inv, enderChestData, potionData);
             }catch (InterruptedException | ExecutionException e){
-                MySQLLogger.report(uuid, e, "PlayerDataController load failed");
+                MySQLLogger.report(uuid, e, "Failed to load player data");
                 return null;
             }
         });
@@ -40,14 +45,9 @@ public class PlayerDataController {
         val inventoryFuture = inventoryDataModel.save(uuid, data.getInventory());
         val valuesFuture = valuesDataModel.save(uuid, data.getValues());
         val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
+        val potionFuture = potionDatabase.save(uuid, data.getPotionEffects());
 
-        inventoryFuture.thenAccept(triedDuplicated -> {
-            if(triedDuplicated){
-                MySQLLogger.log(PlayerDataLog.duplicateSaveLog(data));
-            }
-        });
-
-        return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
+        return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture, potionFuture);
     }
 
     public CompletableFuture<Void> save(PlayerData data, long afterMills){

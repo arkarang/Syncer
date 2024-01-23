@@ -10,9 +10,6 @@ import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.gui.PlayerDataGUIFactory;
 import com.minepalm.syncer.player.bukkit.strategies.*;
-import com.minepalm.syncer.player.bukkit.test.DuplicateFinder;
-import com.minepalm.syncer.player.bukkit.test.LoopTest;
-import com.minepalm.syncer.player.bukkit.test.TestCommand;
 import com.minepalm.syncer.player.mysql.*;
 import kr.msleague.mslibrary.database.impl.internal.MySQLDatabase;
 import kr.travelrpg.travellibrary.bukkit.TravelLibraryBukkit;
@@ -56,24 +53,13 @@ public class PlayerSyncer extends JavaPlugin {
         MySQLDatabase logDatabase = TravelLibraryBukkit.of().dataSource().mysql(conf.getLogMySQLName());
         BukkitExecutor bukkitExecutor = new BukkitExecutor(this, Bukkit.getScheduler());
 
-        MySQLPlayerEnderChestDataModel enderChestDataModel
-                = new MySQLPlayerEnderChestDataModel("playersyncer_enderchest", database);
-        MySQLPlayerInventoryDataModel inventoryDataModel
-                = new MySQLPlayerInventoryDataModel("playersyncer_inventory", database);
-        MySQLPlayerValuesDataModel valuesDataModel
-                = new MySQLPlayerValuesDataModel("playersyner_values", database);
-
-        enderChestDataModel.init();
-        inventoryDataModel.init();
-        valuesDataModel.init();
-
         this.modifier = initialize(new PlayerApplier(logger));
-        this.storage = new PlayerDataStorage(enderChestDataModel, valuesDataModel, inventoryDataModel);
+        this.storage = new PlayerDataStorage(database);
         this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
                 conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
         this.loop.start();
 
-        this.loader = new PlayerLoader(storage, modifier, syncer, bukkitExecutor,
+        this.loader = new PlayerLoader(storage, modifier, bukkitExecutor,
                 conf.getExtendingTimeoutPeriod(), conf.getTimeout());
 
         conf.getStrategies().forEach(key -> this.modifier.setActivate(key, true));
@@ -98,12 +84,10 @@ public class PlayerSyncer extends JavaPlugin {
 
         Bukkit.getScheduler().runTask(this, ()-> this.listener.setAllow());
 
-        getCommand("pstest").setExecutor(new TestCommand(new LoopTest(loader, this.getLogger()), new DuplicateFinder(this.getLogger(), logDatabase)));
         BukkitCommandManager commandManager = new BukkitCommandManager(this);
         commandManager.registerCommand(new InspectCommands(new BukkitExecutor(this, Bukkit.getScheduler()), playerLogDatabase,
-                inventoryDataModel,
-                enderChestDataModel,
-                new PlayerDataGUIFactory(inventoryDataModel, enderChestDataModel)));
+                storage.getInventoryDataModel(), storage.getEnderChestDataModel(),
+                new PlayerDataGUIFactory(storage.getInventoryDataModel(), storage.getEnderChestDataModel())));
         ArkarangGUIListener.init();
     }
 
@@ -143,6 +127,7 @@ public class PlayerSyncer extends JavaPlugin {
         modifier.registerStrategy("fly", new SetFly());
         modifier.registerStrategy("hungers", new SetHungers());
         modifier.registerStrategy("currentHealth", new SetCurrentHealth(this, Bukkit.getScheduler()));
+        modifier.registerStrategy("potion", new SetPotion());
         return modifier;
     }
 

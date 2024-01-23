@@ -19,5 +19,7 @@ public class PlayerData {
     private final PlayerDataInventory inventory;
     @Nullable
     private final PlayerDataEnderChest enderChest;
+    @Nullable
+    private final PlayerDataPotion potionEffects;
 
 }

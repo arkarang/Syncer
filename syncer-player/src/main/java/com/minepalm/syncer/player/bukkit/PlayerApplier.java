@@ -91,7 +91,8 @@ public class PlayerApplier {
 
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
         PlayerDataEnderChest enderChest = PlayerDataEnderChest.of(player.getEnderChest());
-        return new PlayerData(player.getUniqueId(), values, inventory, enderChest);
+        PlayerDataPotion potion = new PlayerDataPotion(player.getActivePotionEffects());
+        return new PlayerData(player.getUniqueId(), values, inventory, enderChest, potion);
     }
 
     private void closeInventory(Player player){

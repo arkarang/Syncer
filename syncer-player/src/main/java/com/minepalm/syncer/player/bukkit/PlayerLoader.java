@@ -3,8 +3,6 @@ package com.minepalm.syncer.player.bukkit;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
-import com.minepalm.syncer.api.SyncService;
-import com.minepalm.syncer.api.Synced;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +10,6 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +26,6 @@ public class PlayerLoader {
 
     private final PlayerDataStorage storage;
     private final PlayerApplier modifier;
-    private final SyncService service;
     private final BukkitExecutor executor;
 
     private final long updatePeriodMills;
@@ -51,7 +47,7 @@ public class PlayerLoader {
             //TODO: delete
             //hold(uuid);
 
-            data = storage.getPlayerData(uuid).join();
+            data = storage.getPlayerData(uuid).get(5000L, TimeUnit.MILLISECONDS);
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
@@ -120,24 +116,8 @@ public class PlayerLoader {
 
     public void hold(UUID uuid){
         PlayerHolder holder = new PlayerHolder(uuid);
-        Synced<PlayerHolder> synced = service.of(holder);
-
-        try{
-            synced.hold(Duration.ofMillis(5000L + updatePeriodMills), userTimeoutMills);
-        } catch (TimeoutException | InterruptedException | ExecutionException ignored) {
-
-        }
     }
 
-    public void release(UUID uuid) {
-        try {
-            PlayerHolder holder = new PlayerHolder(uuid);
-            Synced<PlayerHolder> synced = service.of(holder);
-            synced.release();
-        }catch (ExecutionException | InterruptedException  ignored){
-
-        }
-    }
 
     public void save(UUID uuid, PlayerData data, String description) {
         try {
@@ -164,10 +144,7 @@ public class PlayerLoader {
     }
 
     public void saveDisabled(UUID uuid, PlayerData data){
-        PlayerHolder holder = new PlayerHolder(uuid);
-        Synced<PlayerHolder> synced = service.of(holder);
         try {
-            try {
                 List<CompletableFuture<?>> list = new ArrayList<>();
                 for (LoadStrategy strategy : customLoadStrategies.values()) {
                     list.add(strategy.onUnload(uuid));
@@ -178,9 +155,7 @@ public class PlayerLoader {
                     MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
                 }
                 CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(60000L, TimeUnit.MILLISECONDS);
-            } finally {
-                synced.release();
-            }
+
         } catch (Throwable ex) {
             MySQLLogger.report(data, ex, "disable save failed");
         }
@@ -190,11 +165,6 @@ public class PlayerLoader {
         Player player = Bukkit.getPlayer(uuid);
         if(player != null) {
             try {
-                PlayerHolder holder = new PlayerHolder(uuid);
-                Synced<PlayerHolder> synced = service.of(holder);
-                if(!synced.isHold().join()){
-                    synced.unsafe().hold();
-                }
                 save(uuid, modifier.extract(player), "teleport");
                 markPass(uuid);
             }catch (Throwable ex){
