@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class PlayerApplier {
 
-    private final TimestampLogger logger;
     private final List<String> orders = new ArrayList<>();
     private final ConcurrentHashMap<String, ApplyStrategy> strategies = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Boolean> activates = new ConcurrentHashMap<>();
@@ -54,7 +53,6 @@ public class PlayerApplier {
             if(activates.containsKey(key)) {
                 ApplyStrategy strategy = strategies.get(key);
                 try {
-                    logger.log(player.getName()+": try apply "+key);
                     strategy.applyPlayer(player, data);
                 } catch (Throwable e) {
                     MySQLLogger.report(data, e, "apply failed at "+key+" strategy");

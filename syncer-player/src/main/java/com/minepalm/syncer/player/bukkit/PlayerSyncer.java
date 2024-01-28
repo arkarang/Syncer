@@ -36,7 +36,6 @@ public class PlayerSyncer extends JavaPlugin {
 
     Syncer syncer;
     BungeeJump bungeeJump;
-    UpdateTimeoutLoop loop;
     PlayerJoinListener listener;
     PlayerDataStorage storage;
     PlayerApplier modifier;
@@ -46,39 +45,33 @@ public class PlayerSyncer extends JavaPlugin {
     public void onEnable() {
         inst = this;
         PlayerSyncerConf conf = new PlayerSyncerConf(this, "config.yml");
-        TimestampLogger logger = new TimestampLogger(this.getLogger());
         this.syncer = SyncerBukkit.inst();
+        String current = syncer.getHolderRegistry().getLocalName();
         this.bungeeJump = BungeeJumpBukkit.getService();
         MySQLDatabase database = TravelLibraryBukkit.of().dataSource().mysql(conf.getMySQLName());
         MySQLDatabase logDatabase = TravelLibraryBukkit.of().dataSource().mysql(conf.getLogMySQLName());
         BukkitExecutor bukkitExecutor = new BukkitExecutor(this, Bukkit.getScheduler());
 
-        this.modifier = initialize(new PlayerApplier(logger));
+        this.modifier = initialize(new PlayerApplier());
         this.storage = new PlayerDataStorage(database);
-        this.loop = new UpdateTimeoutLoop(Executors.newSingleThreadExecutor(), syncer, storage, modifier,
-                conf.getExtendingTimeoutPeriod(), conf.getSavePeriod(), logger);
-        this.loop.start();
 
-        this.loader = new PlayerLoader(storage, modifier, bukkitExecutor,
-                conf.getExtendingTimeoutPeriod(), conf.getTimeout());
+        this.loader = new PlayerLoader(current, storage, modifier, bukkitExecutor);
 
         conf.getStrategies().forEach(key -> this.modifier.setActivate(key, true));
 
-        logger.setLog(conf.logResults());
-
-        this.listener = new PlayerJoinListener(conf, loader, modifier, bukkitExecutor, loop);
+        this.listener = new PlayerJoinListener(current, conf, loader, modifier, bukkitExecutor);
         Bukkit.getPluginManager().registerEvents(listener, this);
 
         syncer.register(PlayerHolder.class, PlayerHolder::toString);
 
         this.bungeeJump.getStrategyRegistry().registerStrategy("sync-player", (context) -> {
             UUID uuid = context.getIssuer();
-            this.loader.preTeleportLock(uuid);
+            this.loader.preTeleportLock(uuid, context.getServer());
         });
 
         MySQLPlayerLogDatabase playerLogDatabase = new MySQLPlayerLogDatabase("playersyncer_logs", logDatabase);
         MySQLErrorReportDatabase exceptionLogDatabase = new MySQLErrorReportDatabase("playersyncer_error_reports", logDatabase);
-        MySQLLogger.init(playerLogDatabase, exceptionLogDatabase);
+        MySQLLogger.init(current, playerLogDatabase, exceptionLogDatabase);
 
         MySQLLogger.purge(System.currentTimeMillis() - 1000L *60*60*24*30*1);
 
@@ -111,8 +104,6 @@ public class PlayerSyncer extends JavaPlugin {
             PlayerData data = modifier.extract(player);
             loader.saveDisabled(player.getUniqueId(), data);
         }
-        loop.end();
-        getLogger().info("disable complete");
 
     }
 

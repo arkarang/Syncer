@@ -10,9 +10,7 @@ import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 
 @RequiredArgsConstructor
@@ -24,18 +22,18 @@ public class PlayerLoader {
     private static final long DEFAULT_SAVE_TIMEOUT_MILLS = 40000L;
 
 
+    private final String currentServer;
     private final PlayerDataStorage storage;
     private final PlayerApplier modifier;
     private final BukkitExecutor executor;
-
-    private final long updatePeriodMills;
-    private final long userTimeoutMills;
 
     private final ConcurrentHashMap<String, LoadStrategy> customLoadStrategies = new ConcurrentHashMap<>();
     private final Cache<UUID, PlayerData> cachedData = CacheBuilder.newBuilder()
             .expireAfterWrite(5, TimeUnit.SECONDS)
             .build();
-    private final ConcurrentHashMap<UUID, Long> passed = new ConcurrentHashMap<>();
+
+    private final Set<UUID> successfullyLoaded = new HashSet<>();
+    private final ConcurrentHashMap<UUID, Long> lastSavedTime = new ConcurrentHashMap<>();
 
     public void register(String key, LoadStrategy strategy){
         customLoadStrategies.put(key, strategy);
@@ -44,14 +42,13 @@ public class PlayerLoader {
     public LoadResult load(UUID uuid) throws ExecutionException, InterruptedException{
         PlayerData data = null;
         try {
-            //TODO: delete
-            //hold(uuid);
+            successfullyLoaded.remove(uuid);
 
             data = storage.getPlayerData(uuid).get(5000L, TimeUnit.MILLISECONDS);
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
-                list.add(strategy.onLoad(uuid));
+                strategy.onLoad(uuid).join();
             }
 
             if(data == null){
@@ -64,13 +61,12 @@ public class PlayerLoader {
 
             val allTasks = CompletableFuture.allOf(list.toArray(new CompletableFuture[0]));
             allTasks.get(DEFAULT_LOAD_TIMEOUT_MILLS, TimeUnit.MILLISECONDS);
-
             setCached(uuid, data);
 
             return LoadResult.SUCCESS;
 
         }catch (Throwable ex){
-            MySQLLogger.report(data, ex, "load failed");
+            MySQLLogger.report(uuid, ex, "load failed");
             return LoadResult.TIMEOUT;
         }
 
@@ -97,30 +93,31 @@ public class PlayerLoader {
                     MySQLLogger.report(data, ex, "apply failed at strategy : "+strategy.getClass());
                 }
             }
+            successfullyLoaded.add(player.getUniqueId());
         }
 
-        return hasCached;
+        return successfullyLoaded.contains(player.getUniqueId());
     }
 
-    public CompletableFuture<Boolean> saveAsync(UUID uuid, PlayerData data, String reason){
-        return executor.async(()-> {
-            if( System.currentTimeMillis() - checkPassed(uuid) >= 1000L ) {
+    public CompletableFuture<Boolean> savePlayerQuit(UUID uuid, PlayerData data, String reason){
+        /*
+         * 이하 코드는 플레이어가 로그아웃할때 플레이어 데이터를 저장하는 경우로, 플레이어가 단순히 서버 이동이 아닌 로그아웃을 하는 경우에만
+         * 실행되는 코드입니다.
+         */
+        long time = System.currentTimeMillis() - getLastSavedTime(uuid);
+        if( time >= 5000L ) {
+            return executor.async(() -> {
                 save(uuid, data, reason);
                 return true;
-            }else{
-                return false;
-            }
-        });
+            });
+        } else
+            return CompletableFuture.completedFuture(false);
 
     }
-
-    public void hold(UUID uuid){
-        PlayerHolder holder = new PlayerHolder(uuid);
-    }
-
 
     public void save(UUID uuid, PlayerData data, String description) {
         try {
+            recordLastSave(uuid);
             removeCached(uuid);
             if(modifier.isActivate("inventory")) {
                 storage.save(uuid, data).get(10000L, TimeUnit.MILLISECONDS);
@@ -129,61 +126,58 @@ public class PlayerLoader {
 
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
-                list.add(strategy.onUnload(uuid));
+                strategy.onUnload(uuid).join();
             }
 
             CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(30000L, TimeUnit.MILLISECONDS);
-            //TODO: delete
-            //release(uuid);
-            markPass(uuid);
-        } catch (TimeoutException e) {
-            MySQLLogger.report(data, e, "save timeout");
-        }catch (ExecutionException | InterruptedException ex) {
+
+            recordLastSave(uuid);
+        } catch (TimeoutException ex) {
+            MySQLLogger.report(data, ex, "save timeout");
+        } catch (Throwable ex) {
             MySQLLogger.report(data, ex, "save failed");
         }
     }
 
-    public void saveDisabled(UUID uuid, PlayerData data){
+    public void saveDisabled(UUID uuid, PlayerData data) {
         try {
-                List<CompletableFuture<?>> list = new ArrayList<>();
-                for (LoadStrategy strategy : customLoadStrategies.values()) {
-                    list.add(strategy.onUnload(uuid));
-                }
+            recordLastSave(uuid);
+            removeCached(uuid);
 
-                if(modifier.isActivate("inventory")) {
-                    storage.save(uuid, data).get(30000L, TimeUnit.MILLISECONDS);
-                    MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
-                }
-                CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(60000L, TimeUnit.MILLISECONDS);
+            List<CompletableFuture<?>> list = new ArrayList<>();
+            for (LoadStrategy strategy : customLoadStrategies.values()) {
+                list.add(strategy.onUnload(uuid));
+            }
+
+            if (modifier.isActivate("inventory")) {
+                storage.save(uuid, data).get(30000L, TimeUnit.MILLISECONDS);
+                MySQLLogger.log(PlayerDataLog.saveLog(data), "DISABLED");
+            }
+            CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(60000L, TimeUnit.MILLISECONDS);
 
         } catch (Throwable ex) {
             MySQLLogger.report(data, ex, "disable save failed");
         }
     }
 
-    public void preTeleportLock(UUID uuid) {
+    public void preTeleportLock(UUID uuid, String dest) {
         Player player = Bukkit.getPlayer(uuid);
+
         if(player != null) {
-            try {
-                save(uuid, modifier.extract(player), "teleport");
-                markPass(uuid);
-            }catch (Throwable ex){
-                unmark(uuid);
-                throw ex;
-            }
+            save(uuid, modifier.extract(player), currentServer+" -> "+dest);
         }
     }
 
-    public void markPass(UUID uuid){
-        passed.put(uuid, System.currentTimeMillis());
+    public void recordLastSave(UUID uuid){
+        lastSavedTime.put(uuid, System.currentTimeMillis());
     }
 
-    public long checkPassed(UUID uuid){
-        return passed.getOrDefault(uuid, 0L);
+    public long getLastSavedTime(UUID uuid){
+        return lastSavedTime.getOrDefault(uuid, 0L);
     }
 
-    public void unmark(UUID uuid){
-        passed.remove(uuid);
+    public void invalidateUpdatedTime(UUID uuid){
+        lastSavedTime.remove(uuid);
     }
 
     public PlayerData getCached(UUID uuid){
@@ -200,5 +194,13 @@ public class PlayerLoader {
 
     void removeCached(UUID uuid){
         cachedData.invalidate(uuid);
+    }
+
+    public boolean isSuccessfullyLoaded(UUID uuid){
+        return successfullyLoaded.contains(uuid);
+    }
+
+    public void invalidateLoaded(UUID uuid){
+        successfullyLoaded.remove(uuid);
     }
 }

@@ -26,7 +26,7 @@ public class PlayerDataController {
         val enderChest = enderChestDataModel.load(uuid);
         val potion = potionDatabase.load(uuid);
 
-        return CompletableFuture.allOf(inventory, values, enderChest, potion).thenApply(ignored -> {
+        return CompletableFuture.allOf(inventory, values, enderChest, potion).thenApplyAsync(ignored -> {
             try {
                 PlayerDataInventory inv = inventory.get();
                 PlayerDataValues data = values.get();
@@ -34,7 +34,7 @@ public class PlayerDataController {
                 PlayerDataPotion potionData = potion.get();
 
                 return new PlayerData(uuid, data, inv, enderChestData, potionData);
-            }catch (InterruptedException | ExecutionException e){
+            }catch (Throwable e){
                 MySQLLogger.report(uuid, e, "Failed to load player data");
                 return null;
             }
@@ -49,21 +49,5 @@ public class PlayerDataController {
 
         return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture, potionFuture);
     }
-
-    public CompletableFuture<Void> save(PlayerData data, long afterMills){
-        return CompletableFuture.runAsync(()->{
-            try {
-                Thread.sleep(afterMills);
-            }catch (Throwable e){
-
-            }
-        }).thenCompose(ignored -> {
-            val inventoryFuture = inventoryDataModel.save(uuid, data.getInventory());
-            val valuesFuture = valuesDataModel.save(uuid, data.getValues());
-            val enderChestFuture = enderChestDataModel.save(uuid, data.getEnderChest());
-            return CompletableFuture.allOf(inventoryFuture, valuesFuture, enderChestFuture);
-        });
-    }
-
 
 }

@@ -32,7 +32,7 @@ public class MySQLPlayerEnderChestDataModel {
 
     public CompletableFuture<PlayerDataEnderChest> load(UUID uuid){
         return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("SELECT `data` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
+            PreparedStatement ps = connection.prepareStatement("SELECT `data` FROM "+table+" WHERE `uuid`=?");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
 

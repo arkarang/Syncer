@@ -41,7 +41,7 @@ public class MySQLPlayerInventoryDataModel {
 
     public CompletableFuture<PlayerDataInventory> load(UUID uuid){
         return database.executeAsync(connection -> {
-            PreparedStatement ps = connection.prepareStatement("SELECT `data`, `generated_time` FROM "+table+" WHERE `uuid`=? FOR UPDATE");
+            PreparedStatement ps = connection.prepareStatement("SELECT `data`, `generated_time` FROM "+table+" WHERE `uuid`=?");
             ps.setString(1, uuid.toString());
             ResultSet rs = ps.executeQuery();
 
@@ -60,6 +60,7 @@ public class MySQLPlayerInventoryDataModel {
         });
     }
 
+    /*
     public CompletableFuture<Boolean> save(UUID uuid, PlayerDataInventory inventory){
         return database.executeAsync(connection -> {
             try {
@@ -89,4 +90,20 @@ public class MySQLPlayerInventoryDataModel {
         });
     }
 
+     */
+
+
+    public CompletableFuture<Boolean> save(UUID uuid, PlayerDataInventory inventory){
+        return database.executeAsync(connection -> {
+
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO " + table + " (`uuid`, `data`, `generated_time`) VALUES(?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE `data`=VALUES(`data`), `generated_time`=VALUES(`generated_time`)");
+            ps.setString(1, uuid.toString());
+            ps.setString(2, CompressedInventorySerializer.itemStackArrayToBase64(inventory.toArray()));
+            ps.setLong(3, inventory.getGeneratedTime());
+            ps.execute();
+
+            return true;
+        });
+    }
 }

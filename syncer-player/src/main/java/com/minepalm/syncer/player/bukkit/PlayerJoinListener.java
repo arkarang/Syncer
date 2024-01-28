@@ -11,28 +11,26 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 public class PlayerJoinListener implements Listener {
 
+    private final String currentServer;
+
     private final PlayerSyncerConf conf;
     private final PlayerLoader loader;
     private final PlayerApplier applier;
     private final BukkitExecutor executor;
 
-    private final UpdateTimeoutLoop loop;
-
     private final AtomicBoolean allowed = new AtomicBoolean(false);
+    private final Set<UUID> sucessfullyLoaded = new HashSet<>();
 
 
     private void makeDelayForTest(long time) {
@@ -58,6 +56,7 @@ public class PlayerJoinListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void asyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) throws ExecutionException, InterruptedException {
         //testCode(event.getUniqueId());
+        sucessfullyLoaded.remove(event.getUniqueId());
         event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
         OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
 
@@ -85,10 +84,12 @@ public class PlayerJoinListener implements Listener {
         UUID uuid = event.getUniqueId();
         LoadResult completed = loader.load(uuid);
 
+        Bukkit.getLogger().info("result: "+completed);
+
         if(completed.equals(LoadResult.SUCCESS)) {
-            loader.unmark(uuid);
+            loader.invalidateUpdatedTime(uuid);
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.ALLOWED);
-        }else if(completed.equals(LoadResult.TIMEOUT)){
+        }else {
             event.setKickMessage(conf.getTimeoutText());
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
         }
@@ -97,11 +98,12 @@ public class PlayerJoinListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerJoinEvent(PlayerJoinEvent event){
         boolean completed = loader.apply(event.getPlayer());
-        loop.join(event.getPlayer().getUniqueId());
 
         if (!completed) {
             event.getPlayer().kickPlayer(conf.getIllegalAccessText());
+            return;
         }
+        sucessfullyLoaded.add(event.getPlayer().getUniqueId());
 
         executor.async(()->{
             MySQLLogger.log(PlayerDataLog.joinLog(applier.extract(event.getPlayer())));
@@ -113,13 +115,15 @@ public class PlayerJoinListener implements Listener {
         UUID uuid = event.getPlayer().getUniqueId();
         PlayerData data = applier.extract(event.getPlayer());
 
-        loader.saveAsync(uuid, data, "QUIT");
-        loop.quit(event.getPlayer().getUniqueId());
+        if(loader.isSuccessfullyLoaded(event.getPlayer().getUniqueId())) {
+            loader.savePlayerQuit(uuid, data, "logout - "+currentServer);
+        }
 
         executor.async(() -> {
             MySQLLogger.log(PlayerDataLog.quitLog(data));
         });
 
+        loader.invalidateLoaded(uuid);
     }
 
     public void setAllow(){
