@@ -7,6 +7,7 @@ import com.minepalm.bungeejump.impl.BungeeJump;
 import com.minepalm.bungeejump.impl.bukkit.BungeeJumpBukkit;
 import com.minepalm.library.PalmLibrary;
 import com.minepalm.library.bukkit.Inv;
+import com.minepalm.library.bukkit.InvSerializer;
 import com.minepalm.syncer.bootstrap.SyncerBukkit;
 import com.minepalm.syncer.core.Syncer;
 import com.minepalm.syncer.player.MySQLLogger;
@@ -104,7 +105,7 @@ public class PlayerSyncer extends JavaPlugin {
                 inventoryDataModel,
                 enderChestDataModel,
                 new PlayerDataGUIFactory(inventoryDataModel, enderChestDataModel)));
-        ArkarangGUIListener.init();
+        ArkarangGUIListener.init(this);
     }
 
     @Override
