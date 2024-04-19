@@ -2,9 +2,7 @@ package com.minepalm.syncer.player.bukkit.strategies;
 
 import com.minepalm.syncer.player.bukkit.PlayerData;
 import lombok.RequiredArgsConstructor;
-import net.minecraft.server.v1_12_R1.EntityPlayer;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_12_R1.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 

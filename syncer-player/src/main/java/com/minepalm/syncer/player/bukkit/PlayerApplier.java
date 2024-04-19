@@ -76,7 +76,7 @@ public class PlayerApplier {
         if(!Bukkit.isPrimaryThread()) {
             CompletableFuture<Void> future = new CompletableFuture<>();
             Bukkit.getScheduler().runTask(PlayerSyncer.getInst(), () -> {
-                closeInventory(player);
+                addCursorItem(player);
                 future.complete(null);
             });
             try {
@@ -84,7 +84,7 @@ public class PlayerApplier {
             }catch (Throwable ignored){
             }
         } else {
-            closeInventory(player);
+            addCursorItem(player);
         }
 
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
@@ -93,20 +93,18 @@ public class PlayerApplier {
         return new PlayerData(player.getUniqueId(), values, inventory, enderChest, potion);
     }
 
-    private void closeInventory(Player player){
-        try {
-            if (player.getOpenInventory() != null) {
-                InventoryView view = player.getOpenInventory();
-                ItemStack item = view.getCursor();
-                if (item != null && item.getType() != Material.AIR) {
-                    Map<Integer, ItemStack> leftover = view.getTopInventory().addItem(item);
-                    if (leftover.size() > 0) {
-                        leftover.values().forEach(leftoverItem -> view.getBottomInventory().addItem(leftoverItem));
-                    }
+    private void addCursorItem(Player player) {
+
+        if (player.getOpenInventory() != null) {
+            InventoryView view = player.getOpenInventory();
+            ItemStack item = view.getCursor();
+            if (item != null && item.getType() != Material.AIR) {
+                Map<Integer, ItemStack> leftover = view.getTopInventory().addItem(item);
+                if (leftover.size() > 0) {
+                    leftover.values().forEach(leftoverItem -> view.getBottomInventory().addItem(leftoverItem));
                 }
             }
-        } catch (Throwable e) {
-            e.printStackTrace();
         }
+
     }
 }
