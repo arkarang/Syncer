@@ -61,7 +61,7 @@ public class PlayerApplier {
         }
     }
 
-    public PlayerData extract(Player player){
+    private PlayerData processExtraction(Player player) {
         double health = player.getHealth();
         int level = player.getLevel();
         int foodLevel = player.getFoodLevel();
@@ -86,11 +86,25 @@ public class PlayerApplier {
         } else {
             addCursorItem(player);
         }
-
         PlayerDataInventory inventory = PlayerDataInventory.of(player.getInventory());
         PlayerDataEnderChest enderChest = PlayerDataEnderChest.of(player.getEnderChest());
         PlayerDataPotion potion = new PlayerDataPotion(player.getActivePotionEffects());
         return new PlayerData(player.getUniqueId(), values, inventory, enderChest, potion);
+    }
+    public PlayerData extract(Player player){
+        if(Bukkit.isPrimaryThread()) {
+            return processExtraction(player);
+        } else {
+            CompletableFuture<PlayerData> future = new CompletableFuture<>();
+            Bukkit.getScheduler().runTask(PlayerSyncer.getInst(), () -> {
+                future.complete(processExtraction(player));
+            });
+            try {
+                return future.get(100L, TimeUnit.MILLISECONDS);
+            }catch (Throwable e){
+                return processExtraction(player);
+            }
+        }
     }
 
     private void addCursorItem(Player player) {

@@ -84,8 +84,6 @@ public class PlayerJoinListener implements Listener {
         UUID uuid = event.getUniqueId();
         LoadResult completed = loader.load(uuid);
 
-        Bukkit.getLogger().info("result: "+completed);
-
         if(completed.equals(LoadResult.SUCCESS)) {
             loader.invalidateUpdatedTime(uuid);
             event.setLoginResult(AsyncPlayerPreLoginEvent.Result.ALLOWED);
