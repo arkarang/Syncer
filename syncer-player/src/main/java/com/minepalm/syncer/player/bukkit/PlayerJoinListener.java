@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -38,18 +39,6 @@ public class PlayerJoinListener implements Listener {
             Thread.sleep(time);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
-    }
-
-    private UUID arkarang = UUID.fromString("7ce52d57-8ac3-4daa-b9a1-5c3c0f8aadf4");
-    private void testCode(UUID uuid) {
-        if(uuid.equals(arkarang)) {
-            String currentServer = PlayerSyncer.getInst().syncer.getHolderRegistry().getLocalName();
-            if(currentServer.equalsIgnoreCase("RPG-dungeon1-4")) {
-                makeDelayForTest(10000);
-            } else if ( currentServer.equalsIgnoreCase("RPG-dungeon1-5")) {
-                makeDelayForTest(5000);
-            }
         }
     }
 
@@ -101,6 +90,7 @@ public class PlayerJoinListener implements Listener {
             event.getPlayer().kickPlayer(conf.getIllegalAccessText());
             return;
         }
+
         sucessfullyLoaded.add(event.getPlayer().getUniqueId());
 
         executor.async(()->{

@@ -61,6 +61,7 @@ public class PlayerSyncer extends JavaPlugin {
 
         this.listener = new PlayerJoinListener(current, conf, loader, modifier, bukkitExecutor);
         Bukkit.getPluginManager().registerEvents(listener, this);
+        Bukkit.getPluginManager().registerEvents(new PlayerFreezer(), this);
 
         syncer.register(PlayerHolder.class, PlayerHolder::toString);
 

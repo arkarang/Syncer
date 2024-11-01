@@ -6,6 +6,7 @@ depend:
   - TravelLibrary
   - BungeeJump
   - Syncer
+  - RendogPlayers
 commands:
   psalter:
     description: 'asdfasdf'

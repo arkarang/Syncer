@@ -5,6 +5,8 @@ import com.google.common.cache.CacheBuilder;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
+import kr.rendog.player.RendogPlayers;
+import kr.rendog.player.ServerInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Bukkit;
@@ -42,7 +44,7 @@ public class PlayerLoader {
     public LoadResult load(UUID uuid) throws ExecutionException, InterruptedException{
         PlayerData data = null;
         try {
-            successfullyLoaded.remove(uuid);
+            invalidateLoaded(uuid);
 
             data = storage.getPlayerData(uuid).get(5000L, TimeUnit.MILLISECONDS);
 
@@ -105,7 +107,7 @@ public class PlayerLoader {
          * 실행되는 코드입니다.
          */
         long time = System.currentTimeMillis() - getLastSavedTime(uuid);
-        if( time >= 5000L ) {
+        if( time >= 250L ) {
             return executor.async(() -> {
                 save(uuid, data, reason);
                 return true;
@@ -117,16 +119,16 @@ public class PlayerLoader {
 
     public void save(UUID uuid, PlayerData data, String description) {
         try {
+
             recordLastSave(uuid);
             removeCached(uuid);
             if(modifier.isActivate("inventory")) {
                 storage.save(uuid, data).get(10000L, TimeUnit.MILLISECONDS);
                 MySQLLogger.log(PlayerDataLog.saveLog(data), description);
             }
-
             List<CompletableFuture<?>> list = new ArrayList<>();
             for (LoadStrategy strategy : customLoadStrategies.values()) {
-                strategy.onUnload(uuid).join();
+                strategy.onUnload(uuid).get(10000L, TimeUnit.MILLISECONDS);
             }
 
             CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).get(30000L, TimeUnit.MILLISECONDS);
@@ -161,9 +163,23 @@ public class PlayerLoader {
     }
 
     public void preTeleportLock(UUID uuid, String dest) {
+        ServerInfo info = RendogPlayers.server(dest);
+        if (info == null) {
+            throw new IllegalArgumentException("Server not found : "+dest);
+        }
+        if (!info.isOpen()) {
+           throw new IllegalStateException("Server is not open : "+dest);
+        }
+        if (info.isWhiteListed()) {
+            if(!info.isWhiteListed(uuid)) {
+                throw new IllegalStateException("Server is white listed : "+dest);
+            }
+        }
+        //TODO: 서버 꽉찼는지 여부 확인하기
         Player player = Bukkit.getPlayer(uuid);
-
+        PlayerFreezer.freezePlayer(uuid);
         if(player != null) {
+            player.closeInventory();
             save(uuid, modifier.extract(player), currentServer+" -> "+dest);
         }
     }
