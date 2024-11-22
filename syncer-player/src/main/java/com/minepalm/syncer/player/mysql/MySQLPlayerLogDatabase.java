@@ -27,8 +27,8 @@ public class MySQLPlayerLogDatabase {
                     "`uuid` VARCHAR(36), " +
                     "`time` BIGINT, "+
                     "`task_id` VARCHAR(16), "+
-                    "`inventory_data` TEXT, " +
-                    "`enderchest_data` TEXT, " +
+                    "`inventory_data` MEDIUMBLOB, " +
+                    "`enderchest_data` MEDIUMBLOB, " +
                     "`data_generated_time` BIGINT DEFAULT 0, "+
                     "`description` TEXT, "+
                     "PRIMARY KEY(`row_id`)) " +
@@ -46,8 +46,8 @@ public class MySQLPlayerLogDatabase {
             ps.setString(1, log.uuid.toString());
             ps.setLong(2, log.log_generated_time);
             ps.setString(3, log.task_name);
-            ps.setString(4, log.inventoryData);
-            ps.setString(5, log.enderChestData);
+            ps.setBytes(4, log.inventoryData);
+            ps.setBytes(5, log.enderChestData);
             ps.setLong(6, log.data_generated_time);
             ps.setString(7, description);
             ps.execute();
@@ -70,8 +70,8 @@ public class MySQLPlayerLogDatabase {
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
-                String invData = rs.getString(3);
-                String enderchestData = rs.getString(4);
+                byte[] invData = rs.getBytes(3);
+                byte[] enderchestData = rs.getBytes(4);
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
@@ -93,8 +93,8 @@ public class MySQLPlayerLogDatabase {
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
-                String invData = rs.getString(3);
-                String enderchestData = rs.getString(4);
+                byte[] invData = rs.getBytes(3);
+                byte[] enderchestData = rs.getBytes(4);
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);
@@ -118,8 +118,8 @@ public class MySQLPlayerLogDatabase {
             while (rs.next()){
                 long time = rs.getLong(1);
                 String taskId = rs.getString(2);
-                String invData = rs.getString(3);
-                String enderchestData = rs.getString(4);
+                byte[] invData = rs.getBytes(3);
+                byte[] enderchestData = rs.getBytes(4);
                 long dataTime = rs.getLong(5);
                 String desc = rs.getString(6);
                 PlayerDataLog log = new PlayerDataLog(taskId, uuid, invData, enderchestData, time, dataTime);

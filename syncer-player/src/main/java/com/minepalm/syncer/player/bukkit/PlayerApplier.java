@@ -109,14 +109,13 @@ public class PlayerApplier {
 
     private void addCursorItem(Player player) {
 
-        if (player.getOpenInventory() != null) {
-            InventoryView view = player.getOpenInventory();
-            ItemStack item = view.getCursor();
-            if (item != null && item.getType() != Material.AIR) {
-                Map<Integer, ItemStack> leftover = view.getTopInventory().addItem(item);
-                if (leftover.size() > 0) {
-                    leftover.values().forEach(leftoverItem -> view.getBottomInventory().addItem(leftoverItem));
-                }
+        player.getOpenInventory();
+        InventoryView view = player.getOpenInventory();
+        ItemStack item = view.getCursor();
+        if (item.getType() != Material.AIR) {
+            Map<Integer, ItemStack> leftover = view.getTopInventory().addItem(item);
+            if (!leftover.isEmpty()) {
+                leftover.values().forEach(leftoverItem -> view.getBottomInventory().addItem(leftoverItem));
             }
         }
 

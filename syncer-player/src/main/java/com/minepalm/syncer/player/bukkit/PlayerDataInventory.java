@@ -1,6 +1,7 @@
 package com.minepalm.syncer.player.bukkit;
 
 import com.google.common.collect.ImmutableMap;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -13,11 +14,8 @@ public class PlayerDataInventory {
     private static final ItemStack AIR = new ItemStack(Material.AIR);
 
     private final ImmutableMap<Integer, ItemStack> items;
+    @Getter
     private final long generatedTime;
-
-    public long getGeneratedTime() {
-        return generatedTime;
-    }
 
     private PlayerDataInventory(Map<Integer, ItemStack> items){
         this.items = ImmutableMap.copyOf(items);
@@ -81,7 +79,7 @@ public class PlayerDataInventory {
         items.put(CHEST, Optional.ofNullable(playerInventory.getChestplate()).orElse(AIR).clone());
         items.put(LEGGINGS, Optional.ofNullable(playerInventory.getLeggings()).orElse(AIR).clone());
         items.put(BOOTS, Optional.ofNullable(playerInventory.getBoots()).orElse(AIR).clone());
-        items.put(OFF_HAND, Optional.ofNullable(playerInventory.getItemInOffHand()).orElse(AIR).clone());
+        items.put(OFF_HAND, Optional.of(playerInventory.getItemInOffHand()).orElse(AIR).clone());
 
         return new PlayerDataInventory(items);
     }

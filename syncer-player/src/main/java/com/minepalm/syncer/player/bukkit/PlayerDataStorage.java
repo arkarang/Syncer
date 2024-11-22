@@ -19,13 +19,13 @@ public class PlayerDataStorage {
 
     public PlayerDataStorage(MySQLDatabase database) {
         enderChestDataModel
-                = new MySQLPlayerEnderChestDataModel("playersyncer_enderchest", database);
+                = new MySQLPlayerEnderChestDataModel("playersyncer_enderchest_v1204", database);
         inventoryDataModel
-                = new MySQLPlayerInventoryDataModel("playersyncer_inventory", database);
+                = new MySQLPlayerInventoryDataModel("playersyncer_inventory_v1204", database);
         valuesDataModel
-                = new MySQLPlayerValuesDataModel("playersyner_values", database);
+                = new MySQLPlayerValuesDataModel("playersyner_values_v1204", database);
         potionDatabase
-                = new MySQLPlayerPotionDatabase("playersyncer_potion", database);
+                = new MySQLPlayerPotionDatabase("playersyncer_potion_v1204", database);
 
         enderChestDataModel.init();
         inventoryDataModel.init();

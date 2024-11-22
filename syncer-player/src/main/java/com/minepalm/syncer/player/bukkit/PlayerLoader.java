@@ -3,6 +3,7 @@ package com.minepalm.syncer.player.bukkit;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.minepalm.arkarangutils.bukkit.BukkitExecutor;
+import com.minepalm.hellobungee.bukkit.HelloBukkit;
 import com.minepalm.syncer.player.MySQLLogger;
 import com.minepalm.syncer.player.bukkit.strategies.LoadStrategy;
 import kr.rendog.player.RendogPlayers;
@@ -162,12 +163,20 @@ public class PlayerLoader {
         }
     }
 
+    private boolean isConnected(String server) {
+        try {
+            return HelloBukkit.getMain().getConnections().getClient(server).isConnected();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public void preTeleportLock(UUID uuid, String dest) {
         ServerInfo info = RendogPlayers.server(dest);
         if (info == null) {
             throw new IllegalArgumentException("Server not found : "+dest);
         }
-        if (!info.isOpen()) {
+        if (!info.isOpen() || isConnected(dest)) {
            throw new IllegalStateException("Server is not open : "+dest);
         }
         if (info.isWhiteListed()) {
@@ -175,11 +184,9 @@ public class PlayerLoader {
                 throw new IllegalStateException("Server is white listed : "+dest);
             }
         }
-        //TODO: 서버 꽉찼는지 여부 확인하기
         Player player = Bukkit.getPlayer(uuid);
         PlayerFreezer.freezePlayer(uuid);
         if(player != null) {
-            player.closeInventory();
             save(uuid, modifier.extract(player), currentServer+" -> "+dest);
         }
     }

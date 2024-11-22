@@ -13,8 +13,9 @@ import com.minepalm.syncer.player.mysql.MySQLPlayerInventoryDataModel;
 import com.minepalm.syncer.player.mysql.MySQLPlayerLogDatabase;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -107,18 +108,19 @@ public class InspectCommands extends BaseCommand {
         map.put(player.getUniqueId(), list);
         int count = 0;
         for (Pair<PlayerDataLog, String> log : list) {
-            TextComponent chat = print(count, log.getKey(), log.getValue());
+            Component chat = print(count, log.getKey(), log.getValue());
             player.sendMessage(chat);
             count++;
         }
     }
 
-    private TextComponent print(int count, PlayerDataLog log, String desc){
-        TextComponent chat = new TextComponent();
-        chat.setText(count+". "+log.task_name+" | "+logFormat.format(log.log_generated_time)+" | "+logFormat.format(log.data_generated_time)+ " | "+desc);
-        chat.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/inva open "+count));
-        chat.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("§f클릭시 당시 인벤토리를 봅니다.")}));
-        return chat;
+    private Component print(int count, PlayerDataLog log, String desc){
+        return Component.empty()
+                .append(Component.text(count+". "+log.getTask_name()
+                        +" | "+logFormat.format(log.getLog_generated_time())
+                        +" | "+logFormat.format(log.getData_generated_time())+ " | "+desc))
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/inva open "+count))
+                .hoverEvent(HoverEvent.showText(Component.text("§f클릭시 당시 인벤토리를 봅니다.")));
     }
 
     @Subcommand("filter")
@@ -167,14 +169,13 @@ public class InspectCommands extends BaseCommand {
             return;
         }
 
-        executor.async(()->{
+        executor.sync(()->{
             try{
                 factory.build(log.get(index).getKey().uuid, log.get(index).getKey()).openGUI(player);
             }catch (IOException e){
                 e.printStackTrace();
             }
         });
-
     }
 
     @Subcommand("range")
@@ -209,12 +210,10 @@ public class InspectCommands extends BaseCommand {
             player.sendMessage("해당 플레이어는 존재하지 않습니다.");
             return;
         }
-        executor.async(()->{
-            try {
-                factory.modifyGUI(off.getUniqueId(), inventoryDatabase.load(off.getUniqueId()).get()).openGUI(player);
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
+        inventoryDatabase.load(off.getUniqueId()).thenAccept(data -> {
+            executor.sync(()->{
+                factory.modifyGUI(off.getUniqueId(), data).openGUI(player);
+            });
         });
     }
 
@@ -225,13 +224,10 @@ public class InspectCommands extends BaseCommand {
             player.sendMessage("해당 플레이어는 존재하지 않습니다.");
             return;
         }
-        executor.async(()->{
-            try {
-                val gui = factory.modifyEnderGUI(off.getUniqueId(), enderChestModel.load(off.getUniqueId()).get());
-                executor.sync(() -> {gui.openGUI(player);});
-            } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
-            }
+        enderChestModel.load(off.getUniqueId()).thenAccept(data -> {
+            executor.sync(()->{
+                factory.modifyEnderGUI(off.getUniqueId(), data).openGUI(player);
+            });
         });
     }
 
